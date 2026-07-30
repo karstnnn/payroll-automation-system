@@ -1,0 +1,6 @@
+{
+    "pdfFolder": "G:/My Drive/Automate Test/Payslip/",
+    "employeeFile": "G:/My Drive/Automate Test/employees.json",
+    "emailSubject": "Payslip - July 2026",
+    "dryRun": true
+}
