@@ -6,6 +6,9 @@ require("./services/employeeService");
 const pdfService =
 require("./services/pdfService");
 
+const logger = 
+require("./utils/logger");
+
 const config = JSON.parse(
     fs.readFileSync("config.json", "utf8")
 );
@@ -15,10 +18,14 @@ employeeService.loadEmployees(
     config.employeeFile
 );
 
-const summary =
+const result =
 pdfService.checkPDFs(
     employees,
     config.pdfFolder
 );
 
-console.log(summary);
+for (const employee of employees) {
+    logger.logEmployee(employee);
+}
+
+logger.logSummary(result.summary);

@@ -2,9 +2,10 @@ const fs = require("fs");
 const path = require("path");
 
 function checkPDFs(employees, pdfFolder) {
-
+    let emp = 0;
     let found = 0;
     let missing = 0;
+    let summary = [];
 
     for (const employee of employees) {
 
@@ -22,12 +23,16 @@ function checkPDFs(employees, pdfFolder) {
         else {
             missing++;
         }
-
+        emp++;
     }
-
-    return {
+    summary = {
         found,
-        missing
+        missing,
+        emp
+    }
+    return {
+        employees,
+        summary
     };
 
 }
