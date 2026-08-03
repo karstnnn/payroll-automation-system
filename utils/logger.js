@@ -2,6 +2,7 @@ const fs = require("fs");
 
 function logEmployee(employee){
 
+    console.log(`Sending to ${employee.email}...`);
     console.log(employee.name);
     console.log(employee.email);
 
@@ -10,6 +11,14 @@ function logEmployee(employee){
     }
     else{
         console.log("✗ PDF Missing");
+    }
+
+    if(employee.emailSent){
+      console.log("✓ Email Sent")
+    }
+
+    else{
+        console.log("✗ Email Failed");
     }
     console.log("------------------------");
 }

@@ -6,26 +6,42 @@ require("./services/employeeService");
 const pdfService =
 require("./services/pdfService");
 
+const emailService =
+require("./services/emailService")
+
 const logger = 
 require("./utils/logger");
 
-const config = JSON.parse(
-    fs.readFileSync("config.json", "utf8")
-);
+async function main() {
+    const config = JSON.parse(
+        fs.readFileSync("config.json", "utf8")
+    );
 
-const employees =
-employeeService.loadEmployees(
-    config.employeeFile
-);
+    const employees =
+    employeeService.loadEmployees(
+        config.employeeFile
+    );
 
-const result =
-pdfService.checkPDFs(
-    employees,
-    config.pdfFolder
-);
+    const result =
+    pdfService.checkPDFs(
+        employees,
+        config.pdfFolder
+    );
 
-for (const employee of employees) {
-    logger.logEmployee(employee);
+    for (const employee of employees) {
+
+       if(!employee.pdfExists){
+            logger.logEmployee(employee);
+            continue;
+        }
+        await emailService.send(employee);
+        logger.logEmployee(employee);
+    }
+    
+    logger.logSummary(result.summary);
 }
 
-logger.logSummary(result.summary);
+main().catch(err => {
+    console.error("Fatal error:", err);
+    process.exit(1);
+});
