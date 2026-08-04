@@ -1,6 +1,7 @@
+require('dotenv').config();
+
 const fs = require("fs");
 const nodemailer = require('nodemailer');
-
 
 const employeeService =
 require("./services/employeeService");
@@ -36,7 +37,7 @@ async function main() {
             logger.logEmployee(employee);
             continue;
         }
-        await emailService.send(employee);
+        await emailService.send(employee,config);
         logger.logEmployee(employee);
     }
     

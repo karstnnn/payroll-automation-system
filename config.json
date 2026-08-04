@@ -6,9 +6,7 @@
     "smtp": {
         "host": "smtpout.secureserver.net",
         "port": 465,
-        "secure": true,
-        "user": "",
-        "password": ""
+        "secure": true
     },
 
     "dryRun": true
