@@ -7,7 +7,7 @@
         "host": "smtpout.secureserver.net",
         "port": 465,
         "secure": true,
-        "user": "karsten.mediano@gmail.com",
+        "user": "",
         "password": ""
     },
 

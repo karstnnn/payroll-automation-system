@@ -1,4 +1,6 @@
 const fs = require("fs");
+const nodemailer = require('nodemailer');
+
 
 const employeeService =
 require("./services/employeeService");

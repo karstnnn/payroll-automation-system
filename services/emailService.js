@@ -1,7 +1,7 @@
 const nodemailer = require('nodemailer');
 
 async function verifyConnection(config) {
-    const transporter = nodeemailer.createTransport({
+    const transporter = nodemailer.createTransport({
         host: config.smtp.host,
         port: config.smtp.port,
         secure: config.smtp.secure,
