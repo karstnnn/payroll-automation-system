@@ -39,6 +39,7 @@ async function main() {
     }
     
     logger.logSummary(result.summary);
+    await emailService.verifyConnection(config);
 }
 
 main().catch(err => {

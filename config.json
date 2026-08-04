@@ -2,5 +2,14 @@
     "pdfFolder": "G:/My Drive/Automate Test/Payslip/",
     "employeeFile": "G:/My Drive/Automate Test/employees.json",
     "emailSubject": "Payslip - July 2026",
+
+    "smtp": {
+        "host": "smtpout.secureserver.net",
+        "port": 465,
+        "secure": true,
+        "user": "karsten.mediano@gmail.com",
+        "password": ""
+    },
+
     "dryRun": true
 }
