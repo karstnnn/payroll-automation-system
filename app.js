@@ -18,9 +18,7 @@ async function main() {
     await appScriptService.generatePayslips();
 
     const employees =
-    employeeService.loadEmployees(
-        config.employeeFile
-    );
+    await employeeService.loadEmployees();
 
     await pdfService.waitForPDFs(
         employees,

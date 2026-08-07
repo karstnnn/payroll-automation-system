@@ -1,9 +1,13 @@
 const fs = require("fs");
 
-function loadEmployees(employeeFile) {
-    return JSON.parse(
-        fs.readFileSync(employeeFile, "utf8")
-    );
+async function loadEmployees(employeeFile) {
+    const response =
+        await fetch(
+            process.env.APPS_SCRIPT_URL +
+            "?action=employees"
+        );
+
+    return await response.json();
 }
 
 module.exports = {

@@ -7,7 +7,10 @@ async function generatePayslips(){
     );
 
     const response =
-        await fetch(process.env.APPS_SCRIPT_URL);
+        await fetch(
+            process.env.APPS_SCRIPT_URL +
+            "?action=generate"
+        );
 
     console.log("Execution completed.");
 

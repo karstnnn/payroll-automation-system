@@ -1,6 +1,5 @@
 {
-    "pdfFolder": "G:/My Drive/Automate Test/Payslip/",
-    "employeeFile": "G:/My Drive/Automate Test/employees.json",
+    "pdfFolder": "G:/My Drive/Automate Test/Payslip/2026/August 2026",
     "emailSubject": "Test - July 2026",
 
     "smtp": {
