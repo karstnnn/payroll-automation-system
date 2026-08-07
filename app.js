@@ -8,12 +8,19 @@ const employeeService = require("./services/employeeService");
 const pdfService = require("./services/pdfService");
 const emailService = require("./services/emailService")
 
+const dateUtils = require("./utils/dateUtils");
 const logger = require("./utils/logger");
 
 async function main() {
     const config = JSON.parse(
         fs.readFileSync("config.json", "utf8")
     );
+
+    config.pdfFolder =
+    dateUtils.getPdfFolder(config.pdfRootFolder);
+
+    config.emailSubject =
+    dateUtils.getEmailSubject();
 
     await appScriptService.generatePayslips();
 

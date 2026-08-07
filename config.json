@@ -1,6 +1,5 @@
 {
-    "pdfFolder": "G:/My Drive/Automate Test/Payslip",
-    "emailSubject": "Pay Slip - August 2026",
+    "pdfRootFolder": "G:/My Drive/Automate Test/Payslip",
 
     "smtp": {
         "host": "smtpout.secureserver.net",
