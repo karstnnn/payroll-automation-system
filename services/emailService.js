@@ -1,6 +1,6 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
-const template = require("./emailTemplate");
+const template = require("../templates/emailTemplate");
 
 async function verifyConnection(config) {
     console.log(process.env.SMTP_USER);
@@ -48,7 +48,7 @@ async function send(employee, config) {
 
         subject: email.subject,
 
-        text: email.text,
+        html: email.html,
 
         attachments: [
             {
