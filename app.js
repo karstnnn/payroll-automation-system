@@ -11,7 +11,7 @@ const emailService = require("./services/emailService")
 const dateUtils = require("./utils/dateUtils");
 const logger = require("./utils/logger");
 
-async function main() {
+async function runPayroll() {
     const config = JSON.parse(
         fs.readFileSync("config.json", "utf8")
     );
@@ -50,9 +50,13 @@ async function main() {
     
     logger.logSummary(result.summary);
     await emailService.verifyConnection(config);
+
+    return {
+        employees,
+        summary: result.summary
+    };
 }
 
-main().catch(err => {
-    console.error("Fatal error:", err);
-    process.exit(1);
-});
+module.exports = {
+    runPayroll
+};

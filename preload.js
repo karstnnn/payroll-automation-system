@@ -1,9 +1,9 @@
-const { contextBridge } = require("electron");
+const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("electronAPI", {
 
-    test: () => {
-        console.log("Electron API is working.");
+    runPayroll: () => {
+        return ipcRenderer.invoke("run-payroll");
     }
 
 });

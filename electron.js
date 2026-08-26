@@ -1,11 +1,14 @@
-const { app, BrowserWindow } = require("electron");
+const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("path");
+
+const { runPayroll } = require("./app");
 
 function createWindow() {
 
     const window = new BrowserWindow({
         width: 1000,
         height: 700,
+
         webPreferences: {
             preload: path.join(__dirname, "preload.js")
         }
@@ -14,24 +17,32 @@ function createWindow() {
     window.loadFile("index.html");
 }
 
-app.whenReady().then(() => {
+ipcMain.handle("run-payroll", async () => {
 
-    createWindow();
+    try {
 
-    app.on("activate", () => {
+        const result = await runPayroll();
 
-        if (BrowserWindow.getAllWindows().length === 0) {
-            createWindow();
-        }
+        return {
+            success: true,
+            result
+        };
 
-    });
+    } catch (error) {
+
+        console.error(error);
+
+        return {
+            success: false,
+            error: error.message
+        };
+
+    }
 
 });
 
-app.on("window-all-closed", () => {
+app.whenReady().then(() => {
 
-    if (process.platform !== "darwin") {
-        app.quit();
-    }
+    createWindow();
 
 });
