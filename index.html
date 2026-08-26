@@ -1,8 +1,14 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
     <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
     <title>Payslip Automation</title>
 
     <link rel="stylesheet" href="styles.css">
@@ -10,15 +16,86 @@
 
 <body>
 
-    <h1>Payslip Automation</h1>
+    <main class="app">
 
-    <button id="generateBtn">
-        Generate & Send Payslips
-    </button>
+        <section class="hero">
 
-    <p id="status"></p>
+            <div class="content">
 
-    <script src="renderer.js"></script>
+                <h1>Payslip Automation</h1>
+
+                <p class="subtitle">
+                    Generate and send employee payslips automatically.
+                </p>
+
+                <button
+                    id="generateBtn"
+                    class="generate-btn"
+                >
+                    <span class="button-icon">▧</span>
+
+                    <span>
+                        Generate &amp; Send Payslips
+                    </span>
+                </button>
+
+                <p
+                    id="status"
+                    class="status"
+                ></p>
+
+            </div>
+
+            <div class="illustration">
+
+                <div class="paper paper-back"></div>
+
+                <div class="paper">
+
+                    <div class="paper-lines">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="paper-section">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="paper-section short">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+
+                    <div class="signature">
+                        <svg
+                            viewBox="0 0 100 40"
+                            xmlns="http://www.w3.org/2000/svg"
+                        >
+                            <path
+                                d="M5 30
+                                   C15 10, 20 35, 28 22
+                                   C35 10, 37 30, 45 25
+                                   C52 20, 54 10, 60 17
+                                   C67 25, 73 28, 80 18
+                                   C85 10, 90 14, 95 8"
+                            />
+                        </svg>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src=""></script>
 
 </body>
 
