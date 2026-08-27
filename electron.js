@@ -17,11 +17,18 @@ function createWindow() {
     window.loadFile("index.html");
 }
 
-ipcMain.handle("run-payroll", async () => {
+ipcMain.handle("run-payroll", async (event) => {
 
     try {
 
-        const result = await runPayroll();
+        const result = await runPayroll((progress) => {
+
+            event.sender.send(
+                "payroll-progress",
+                progress
+            );
+
+        });
 
         return {
             success: true,
@@ -31,6 +38,14 @@ ipcMain.handle("run-payroll", async () => {
     } catch (error) {
 
         console.error(error);
+
+        event.sender.send(
+            "payroll-progress",
+            {
+                type: "error",
+                message: error.message
+            }
+        );
 
         return {
             success: false,
