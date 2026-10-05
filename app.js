@@ -87,6 +87,8 @@ async function runPayroll(onProgress = () => {}) {
 
             logger.logEmployee(employee);
 
+            employee.emailStatus = "skipped";
+
             onProgress({
                 type: "error",
                 message: `${employee.name} - PDF Missing`
@@ -95,26 +97,48 @@ async function runPayroll(onProgress = () => {}) {
             continue;
         }
 
+        const emailResult =
+            await emailService.sendWithRetry(
+                employee,
+                config,
+                onProgress
+            );
 
-        onProgress({
-            type: "status",
-            message: `Sending payslip to ${employee.name}...`
-        });
 
+        if (emailResult.success) {
 
-        await emailService.send(
-            employee,
-            config
-        );
+            employee.emailStatus = "sent";
+            employee.emailAttempts =
+                emailResult.attempts;
+
+            onProgress({
+                type: "success",
+                message:
+                    `${employee.name} - Email Sent`
+            });
+
+        }
+        else {
+
+            employee.emailStatus = "failed";
+            employee.emailAttempts =
+                emailResult.attempts;
+
+            employee.emailError =
+                emailResult.error?.message ||
+                "Unknown email error";
+
+            onProgress({
+                type: "error",
+                message:
+                    `${employee.name} - Email Failed`
+            });
+
+        }
 
 
         logger.logEmployee(employee);
 
-
-        onProgress({
-            type: "success",
-            message: `${employee.name} - Email Sent`
-        });
 
     }
 
@@ -122,16 +146,37 @@ async function runPayroll(onProgress = () => {}) {
     logger.logSummary(result.summary);
 
 
+    const emailSummary = {
+        total: employees.length,
+
+        sent: employees.filter(
+            employee => employee.emailStatus === "sent"
+        ).length,
+
+        failed: employees.filter(
+            employee => employee.emailStatus === "failed"
+        ).length,
+
+        skipped: employees.filter(
+            employee => employee.emailStatus === "skipped"
+        ).length
+    };
+
     onProgress({
         type: "complete",
-        message: "Payroll process completed.",
-        summary: result.summary
+        message:
+            `Payslip process completed. ` +
+            `${emailSummary.sent} sent, ` +
+            `${emailSummary.failed} failed, ` +
+            `${emailSummary.skipped} skipped.`,
+        summary: emailSummary
     });
 
 
     return {
         employees,
-        summary: result.summary
+        summary: result.summary,
+        emailSummary
     };
 }
 
