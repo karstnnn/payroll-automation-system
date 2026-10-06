@@ -13,6 +13,8 @@ const logger = require("./utils/logger");
 
 async function runPayroll(onProgress = () => {}) {
 
+    logger.info("Payslip process started.");
+
     const config = JSON.parse(
         fs.readFileSync("config.json", "utf8")
     );
@@ -27,6 +29,7 @@ async function runPayroll(onProgress = () => {}) {
         type: "status",
         message: "Generating payslips..."
     });
+    logger.info("Generating payslips...");
 
     await appScriptService.generatePayslips();
 
@@ -35,11 +38,14 @@ async function runPayroll(onProgress = () => {}) {
         message: "Payslips generated."
     });
 
+    logger.success("Payslips generated.");
 
     onProgress({
         type: "status",
         message: "Loading employee data..."
     });
+
+    logger.info("Loading employee data...");
 
     const employees =
         await employeeService.loadEmployees();
@@ -49,6 +55,8 @@ async function runPayroll(onProgress = () => {}) {
         type: "status",
         message: `Checking ${employees.length} employee PDFs...`
     });
+
+    logger.info(`Checking ${employees.length} employee PDFs...`);
 
     await pdfService.waitForPDFs(
         employees,
@@ -62,8 +70,6 @@ async function runPayroll(onProgress = () => {}) {
             config.pdfFolder
         );
 
-    console.log(`PDF check completed: ${result.summary}`);
-    
     onProgress({
     type: "success",
     message:
@@ -72,6 +78,12 @@ async function runPayroll(onProgress = () => {}) {
         `${result.summary.missing} PDFs missing`
     });
 
+    logger.success(
+        `PDF validation completed: ` +
+        `${result.summary.found} found, ` +
+        `${result.summary.missing} missing`
+    );
+
 
     await emailService.verifyConnection(config);
 
@@ -79,6 +91,8 @@ async function runPayroll(onProgress = () => {}) {
         type: "success",
         message: "Email server connection verified."
     });
+
+    logger.success("Email server connection verified.");
 
 
     for (const employee of employees) {
@@ -93,6 +107,10 @@ async function runPayroll(onProgress = () => {}) {
                 type: "error",
                 message: `${employee.name} - PDF Missing`
             });
+
+            logger.warning(
+                `${employee.name} - PDF Missing, skipping email.`
+            );
 
             continue;
         }
@@ -117,6 +135,10 @@ async function runPayroll(onProgress = () => {}) {
                     `${employee.name} - Email Sent`
             });
 
+            logger.success(
+                `${employee.name} - Email Sent`
+            );
+
         }
         else {
 
@@ -133,6 +155,11 @@ async function runPayroll(onProgress = () => {}) {
                 message:
                     `${employee.name} - Email Failed`
             });
+
+            logger.error(
+                `${employee.name} - Email Failed`,
+                emailResult.error
+            );
 
         }
 
@@ -171,6 +198,13 @@ async function runPayroll(onProgress = () => {}) {
             `${emailSummary.skipped} skipped.`,
         summary: emailSummary
     });
+
+    logger.success(
+        `Payslip process completed. ` +
+        `${emailSummary.sent} sent, ` +
+        `${emailSummary.failed} failed, ` +
+        `${emailSummary.skipped} skipped.`
+    );
 
 
     return {

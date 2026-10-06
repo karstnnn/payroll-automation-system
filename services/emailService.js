@@ -1,6 +1,7 @@
 require('dotenv').config();
 const nodemailer = require('nodemailer');
 const template = require("../templates/emailTemplate");
+const logger = require("../utils/logger");
 
 function createTransporter(config) {
 
@@ -18,7 +19,7 @@ function createTransporter(config) {
 }
 
 async function verifyConnection(config) {
-    console.log(process.env.SMTP_USER);
+    logger.info("Verifying SMTP connection...");
     if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
         throw new Error(
             "Missing SMTP credentials in .env"
@@ -29,7 +30,7 @@ async function verifyConnection(config) {
 
     await transporter.verify();
     
-    console.log("SMTP connection verified successfully.");
+    logger.info("SMTP connection verified successfully.");
 }
 
 async function send(employee, config) {
@@ -65,7 +66,7 @@ function wait(ms) {
     return new Promise(
         resolve => setTimeout(resolve, ms)
     );
-
+}
 
 
 function shouldRetry(error) {
@@ -94,7 +95,7 @@ function shouldRetry(error) {
 
 
     return false;
-}}
+}
 
 async function sendWithRetry(
     employee,
@@ -121,6 +122,11 @@ async function sendWithRetry(
                     `(Attempt ${attempt}/${maxAttempts})`
             });
 
+            logger.info(
+                `Sending payslip to ${employee.name} ` +
+                `(Attempt ${attempt}/${maxAttempts})`
+            );
+
 
             const info =
                 await send(employee, config);
@@ -140,6 +146,11 @@ async function sendWithRetry(
 
             employee.emailSent = false;
 
+            logger.error(
+                `Email attempt ${attempt}/${maxAttempts} failed for ${employee.name}`,
+                error
+            );
+
             onProgress({
                 type: "error",
                 message:
@@ -158,23 +169,26 @@ async function sendWithRetry(
 
             }
 
-            if (attempt === maxAttempts) {
-                break;
+            if (attempt < maxAttempts) {
+
+                const delay =
+                    attempt === 1
+                        ? 2000
+                        : 5000;
+
+                logger.warning(
+                    `Retrying email for ${employee.name} in ${delay / 1000} seconds`
+                );
+
+                onProgress({
+                    type: "status",
+                    message:
+                        `Retrying ${employee.name} in ` +
+                        `${delay / 1000} seconds...`
+                });
+
+                await wait(delay);
             }
-
-            const delay =
-                attempt === 1
-                    ? 2000
-                    : 5000;
-
-            onProgress({
-                type: "status",
-                message:
-                    `Retrying ${employee.name} in ` +
-                    `${delay / 1000} seconds...`
-            });
-
-            await wait(delay);
 
         }
 
