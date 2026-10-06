@@ -189,14 +189,44 @@ async function runPayroll(onProgress = () => {}) {
         ).length
     };
 
+    const processSummary = {
+        employees: employees.length,
+
+        pdf: {
+            found: result.summary.found,
+            missing: result.summary.missing
+        },
+
+        email: {
+            sent: employees.filter(
+                employee => employee.emailStatus === "sent"
+            ).length,
+
+            failed: employees.filter(
+                employee => employee.emailStatus === "failed"
+            ).length,
+
+            skipped: employees.filter(
+                employee => employee.emailStatus === "skipped"
+            ).length
+        }
+    };
+
+    const overallStatus =
+    processSummary.pdf.missing === 0 &&
+    processSummary.email.failed === 0
+        ? "success"
+        : "warning";
+
+    logger.logEmailSummary(
+        processSummary.email
+    );
+
     onProgress({
         type: "complete",
-        message:
-            `Payslip process completed. ` +
-            `${emailSummary.sent} sent, ` +
-            `${emailSummary.failed} failed, ` +
-            `${emailSummary.skipped} skipped.`,
-        summary: emailSummary
+        status: overallStatus,
+        message: "Payslip process completed.",
+        summary: processSummary
     });
 
     logger.success(
@@ -210,6 +240,7 @@ async function runPayroll(onProgress = () => {}) {
     return {
         employees,
         summary: result.summary,
+        summary: processSummary,
         emailSummary
     };
 }

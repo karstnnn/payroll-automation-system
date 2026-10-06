@@ -7,6 +7,17 @@ const logContainer =
 const processStatus =
     document.getElementById("processStatus");
 
+const summaryPanel =
+    document.getElementById("summaryPanel");
+
+const sentCount =
+    document.getElementById("sentCount");
+
+const failedCount =
+    document.getElementById("failedCount");
+
+const skippedCount =
+    document.getElementById("skippedCount");
 
 function addLog(progress) {
 
@@ -73,7 +84,26 @@ window.electronAPI.onPayrollProgress(
         if (progress.type === "complete") {
 
             processStatus.textContent =
-                "Completed";
+                progress.status === "success"
+                    ? "Completed"
+                    : "Completed with issues";
+
+
+            if (progress.summary) {
+
+                sentCount.textContent =
+                    progress.summary.email.sent;
+
+                failedCount.textContent =
+                    progress.summary.email.failed;
+
+                skippedCount.textContent =
+                    progress.summary.email.skipped;
+
+                summaryPanel.classList.remove(
+                    "hidden"
+                );
+            }
 
         }
 
@@ -102,6 +132,12 @@ button.addEventListener(
 
         logContainer.innerHTML = "";
 
+        summaryPanel.classList.add("hidden");
+
+        sentCount.textContent = "0";
+        failedCount.textContent = "0";
+        skippedCount.textContent = "0";
+
         processStatus.textContent =
             "Processing...";
 
@@ -112,26 +148,43 @@ button.addEventListener(
         });
 
 
-        const result =
+        try{
+            const result =
             await window.electronAPI.runPayroll();
 
 
-        if (result.success) {
+            if (!result.success) {
 
-            processStatus.textContent =
-                "Completed";
+                processStatus.textContent =
+                    "Failed";
 
+                addLog({
+                    type: "error",
+                    message:
+                        result.error ||
+                        "Payroll process failed."
+                });
+
+            }
         }
 
-        else {
+        catch (error) {
 
             processStatus.textContent =
                 "Failed";
 
+            addLog({
+                type: "error",
+                message:
+                    error.message ||
+                    "Unexpected application error."
+            });
+
         }
 
-
-        button.disabled = false;
+        finally {
+            button.disabled = false;
+        }
 
     }
 );
