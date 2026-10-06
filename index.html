@@ -18,11 +18,19 @@
 
     <main class="app">
 
-        <section class="hero">
+        <section id="homePage" class="hero page">
 
             <div class="content">
 
                 <h1>Payslip Automation</h1>
+
+                <button
+                    id="settingsBtn"
+                    class="settings-btn"
+                    title="Settings"
+                >
+                    ⚙
+                </button>
 
                 <p class="subtitle">
                     Generate and send employee payslips automatically.
@@ -159,6 +167,190 @@
 
         </section>
 
+        <section
+            id="settingsPage"
+            class="page hidden"
+        >
+
+            <div class="settings-header">
+
+                <button
+                    id="backBtn"
+                    class="back-btn"
+                >
+                    ← Back
+                </button>
+
+                <div>
+                    <h2>Settings</h2>
+
+                    <p>
+                        Configure payslip generation and email settings.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <div class="settings-card">
+
+                <h3>General</h3>
+
+
+                <div class="form-group">
+
+                    <label for="pdfRootFolder">
+                        Payslip Folder
+                    </label>
+
+                    <div class="folder-input">
+
+                        <input
+                            type="text"
+                            id="pdfRootFolder"
+                            placeholder="Select Google Drive payslip folder"
+                            readonly
+                        >
+
+                        <button
+                            id="browseFolderBtn"
+                            type="button"
+                            class="secondary-btn"
+                        >
+                            Browse
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <h3>Google Integration</h3>
+
+
+                <div class="form-group">
+
+                    <label for="appsScriptUrl">
+                        Apps Script URL
+                    </label>
+
+                    <input
+                        type="text"
+                        id="appsScriptUrl"
+                        placeholder="https://script.google.com/..."
+                    >
+
+                </div>
+
+
+                <h3>Email / SMTP</h3>
+
+
+                <div class="form-row">
+
+                    <div class="form-group">
+
+                        <label for="smtpHost">
+                            SMTP Host
+                        </label>
+
+                        <input
+                            type="text"
+                            id="smtpHost"
+                            placeholder="smtpout.secureserver.net"
+                        >
+
+                    </div>
+
+
+                    <div class="form-group small">
+
+                        <label for="smtpPort">
+                            Port
+                        </label>
+
+                        <input
+                            type="number"
+                            id="smtpPort"
+                            placeholder="465"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <div class="form-group checkbox-group">
+
+                    <input
+                        type="checkbox"
+                        id="smtpSecure"
+                    >
+
+                    <label for="smtpSecure">
+                        Use secure SSL/TLS connection
+                    </label>
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="smtpUser">
+                        Sender Email
+                    </label>
+
+                    <input
+                        type="email"
+                        id="smtpUser"
+                        placeholder="payroll@company.com"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="smtpPassword">
+                        Email Password
+                    </label>
+
+                    <input
+                        type="password"
+                        id="smtpPassword"
+                        placeholder="••••••••••••"
+                    >
+
+                </div>
+
+
+                <div class="settings-actions">
+
+                    <button
+                        id="testConnectionBtn"
+                        class="secondary-btn"
+                    >
+                        Test Email Connection
+                    </button>
+
+
+                    <button
+                        id="saveSettingsBtn"
+                        class="generate-btn"
+                    >
+                        Save Settings
+                    </button>
+
+                </div>
+
+                <p
+                    id="settingsStatus"
+                    class="settings-status"
+                ></p>
+
+            </div>
+
+        </section>
     </main>
 
     <script src="renderer.js"></script>

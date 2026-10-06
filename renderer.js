@@ -19,6 +19,18 @@ const failedCount =
 const skippedCount =
     document.getElementById("skippedCount");
 
+const homePage =
+    document.getElementById("homePage");
+
+const settingsPage =
+    document.getElementById("settingsPage");
+
+const settingsBtn =
+    document.getElementById("settingsBtn");
+
+const backBtn =
+    document.getElementById("backBtn");
+
 function addLog(progress) {
 
     const entry =
@@ -185,6 +197,33 @@ button.addEventListener(
         finally {
             button.disabled = false;
         }
+
+    }
+);
+
+settingsBtn.addEventListener(
+    "click",
+    () => {
+
+        homePage.classList.add("hidden");
+
+        settingsPage.classList.remove(
+            "hidden"
+        );
+
+    }
+);
+
+
+backBtn.addEventListener(
+    "click",
+    () => {
+
+        settingsPage.classList.add("hidden");
+
+        homePage.classList.remove(
+            "hidden"
+        );
 
     }
 );
