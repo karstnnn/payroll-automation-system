@@ -25,11 +25,11 @@ async function verifyConnection(
 
     const smtpUser =
         credentials.user ||
-        process.env.SMTP_USER;
+        config.smtpUser;
 
     const smtpPassword =
         credentials.password ||
-        process.env.SMTP_PASSWORD;
+        config.smtpPassword;
 
 
     if (!smtpUser || !smtpPassword) {
