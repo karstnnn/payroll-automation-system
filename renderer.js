@@ -293,6 +293,24 @@ settingsBtn.addEventListener(
         ).value =
             settings.smtpUser;
 
+        const passwordInput =
+            document.getElementById(
+                "smtpPassword"
+            );
+
+        if (settings.hasSavedPassword) {
+
+            passwordInput.placeholder =
+                "Saved password";
+
+        }
+        else {
+
+            passwordInput.placeholder =
+                "Enter email password";
+
+        }
+
     }
 );
 
@@ -346,7 +364,12 @@ saveSettingsBtn.addEventListener(
             smtpUser:
                 document.getElementById(
                     "smtpUser"
-                ).value.trim()
+                ).value.trim(),
+            
+            smtpPassword:
+                document.getElementById(
+                    "smtpPassword"
+                ).value
 
         };
 
@@ -364,6 +387,10 @@ saveSettingsBtn.addEventListener(
 
             settingsStatus.textContent =
                 "Settings saved successfully.";
+
+            document.getElementById(
+                "smtpPassword"
+            ).value = "";
 
         }
         else {

@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { app, BrowserWindow, ipcMain, dialog } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require("electron");
 const fs = require("fs");
 const path = require("path");
 const emailService = require("./services/emailService");
@@ -27,6 +27,61 @@ function getSettingsPath() {
         "settings.json"
     );
 
+}
+
+function getCredentialsPath() {
+    return path.join(
+        app.getPath("userData"),
+        "credentials.dat"
+    );
+}
+
+function savePassword(password) {
+
+    if (!safeStorage.isEncryptionAvailable()) {
+        throw new Error(
+            "Secure credential storage is not available."
+        );
+    }
+
+    const encrypted =
+        safeStorage.encryptString(password);
+
+    fs.writeFileSync(
+        getCredentialsPath(),
+        encrypted.toString("base64"),
+        "utf8"
+    );
+}
+
+
+function loadPassword() {
+
+    const credentialsPath =
+        getCredentialsPath();
+
+    if (!fs.existsSync(credentialsPath)) {
+        return "";
+    }
+
+    if (!safeStorage.isEncryptionAvailable()) {
+        throw new Error(
+            "Secure credential storage is not available."
+        );
+    }
+
+    const encrypted =
+        Buffer.from(
+            fs.readFileSync(
+                credentialsPath,
+                "utf8"
+            ),
+            "base64"
+        );
+
+    return safeStorage.decryptString(
+        encrypted
+    );
 }
 
 ipcMain.handle("run-payroll", async (event) => {
@@ -130,7 +185,12 @@ ipcMain.handle(
                         config.smtp?.secure || false,
 
                     smtpUser:
-                        process.env.SMTP_USER || ""
+                        process.env.SMTP_USER || "",
+                    
+                    hasSavedPassword:
+                        fs.existsSync(
+                            getCredentialsPath()
+                        )
 
                 }
             };
@@ -193,18 +253,47 @@ ipcMain.handle(
             const settingsPath =
                 getSettingsPath();
 
+            const normalSettings = {
+
+                pdfRootFolder:
+                    settings.pdfRootFolder,
+
+                appsScriptUrl:
+                    settings.appsScriptUrl,
+
+                smtpHost:
+                    settings.smtpHost,
+
+                smtpPort:
+                    settings.smtpPort,
+
+                smtpSecure:
+                    settings.smtpSecure,
+
+                smtpUser:
+                    settings.smtpUser
+
+            };
 
             fs.writeFileSync(
                 settingsPath,
 
                 JSON.stringify(
-                    settings,
+                    normalSettings,
                     null,
                     2
                 ),
 
                 "utf8"
             );
+
+            if (settings.smtpPassword) {
+
+                savePassword(
+                    settings.smtpPassword
+                );
+
+            }
 
 
             console.log(
@@ -287,10 +376,17 @@ ipcMain.handle(
                 );
             }
 
-            if (!settings.smtpPassword) {
+            const smtpPassword =
+                settings.smtpPassword ||
+                loadPassword();
+
+
+            if (!smtpPassword) {
+
                 throw new Error(
                     "Email password is required."
                 );
+
             }
 
 
@@ -307,7 +403,7 @@ ipcMain.handle(
                 config,
                 {
                     user: settings.smtpUser,
-                    password: settings.smtpPassword
+                    password: smtpPassword
                 }
             );
 
