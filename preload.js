@@ -18,6 +18,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
         settings
     ),
 
+    selectFolder: () =>
+    ipcRenderer.invoke(
+        "select-folder"
+    ),
+
     onPayrollProgress: (callback) => {
 
         ipcRenderer.on(

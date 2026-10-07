@@ -1,5 +1,5 @@
 require("dotenv").config();
-const { app, BrowserWindow, ipcMain } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const fs = require("fs");
 const path = require("path");
 
@@ -231,6 +231,33 @@ ipcMain.handle(
             };
 
         }
+
+    }
+);
+
+ipcMain.handle(
+    "select-folder",
+    async () => {
+
+        const result =
+            await dialog.showOpenDialog({
+                properties: [
+                    "openDirectory"
+                ]
+            });
+
+        if (result.canceled) {
+            return {
+                success: false,
+                canceled: true
+            };
+        }
+
+        return {
+            success: true,
+            folderPath:
+                result.filePaths[0]
+        };
 
     }
 );

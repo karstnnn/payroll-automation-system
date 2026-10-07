@@ -41,6 +41,16 @@ const settingsStatus =
         "settingsStatus"
     );
 
+const browseFolderBtn =
+    document.getElementById(
+        "browseFolderBtn"
+    );
+
+const pdfRootFolder =
+    document.getElementById(
+        "pdfRootFolder"
+    );
+
 function addLog(progress) {
 
     const entry =
@@ -355,6 +365,27 @@ saveSettingsBtn.addEventListener(
 
             settingsStatus.textContent =
                 `Error: ${result.error}`;
+
+        }
+
+    }
+);
+
+browseFolderBtn.addEventListener(
+    "click",
+    async () => {
+
+        const result =
+            await window.electronAPI
+                .selectFolder();
+
+        if (
+            result.success &&
+            result.folderPath
+        ) {
+
+            pdfRootFolder.value =
+                result.folderPath;
 
         }
 
