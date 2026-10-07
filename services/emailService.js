@@ -11,8 +11,8 @@ function createTransporter(config) {
         secure: config.smtp.secure,
 
         auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASSWORD
+            user: config.smtpUser,
+            pass: config.smtpPassword
         }
     });
 
@@ -72,7 +72,7 @@ async function send(employee, config) {
     const email = template.create(employee, config);
 
     const info = await transporter.sendMail({
-        from: process.env.SMTP_USER,
+        from: config.smtpUser,
 
         to: employee.email,
 

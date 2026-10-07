@@ -36,6 +36,66 @@ function getCredentialsPath() {
     );
 }
 
+function getRuntimeConfig() {
+
+    const settingsPath =
+        getSettingsPath();
+
+
+    if (!fs.existsSync(settingsPath)) {
+        throw new Error(
+            "Settings have not been configured yet."
+        );
+    }
+
+
+    const settings =
+        JSON.parse(
+            fs.readFileSync(
+                settingsPath,
+                "utf8"
+            )
+        );
+
+
+    const smtpPassword =
+        loadPassword();
+
+
+    if (!smtpPassword) {
+        throw new Error(
+            "SMTP password has not been configured."
+        );
+    }
+
+
+    return {
+
+        pdfRootFolder:
+            settings.pdfRootFolder,
+
+        appsScriptUrl:
+            settings.appsScriptUrl,
+
+        smtp: {
+            host:
+                settings.smtpHost,
+
+            port:
+                Number(settings.smtpPort),
+
+            secure:
+                settings.smtpSecure
+        },
+
+        smtpUser:
+            settings.smtpUser,
+
+        smtpPassword
+
+    };
+}
+
 function savePassword(password) {
 
     if (!safeStorage.isEncryptionAvailable()) {
@@ -88,7 +148,9 @@ ipcMain.handle("run-payroll", async (event) => {
 
     try {
 
-        const result = await runPayroll((progress) => {
+        const config = getRuntimeConfig();
+
+        const result = await runPayroll(config, (progress) => {
 
             event.sender.send(
                 "payroll-progress",
@@ -105,14 +167,6 @@ ipcMain.handle("run-payroll", async (event) => {
     } catch (error) {
 
         console.error(error);
-
-        event.sender.send(
-            "payroll-progress",
-            {
-                type: "error",
-                message: error.message
-            }
-        );
 
         return {
             success: false,

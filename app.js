@@ -11,13 +11,9 @@ const emailService = require("./services/emailService")
 const dateUtils = require("./utils/dateUtils");
 const logger = require("./utils/logger");
 
-async function runPayroll(onProgress = () => {}) {
+async function runPayroll(config, onProgress = () => {}) {
 
     logger.info("Payslip process started.");
-
-    const config = JSON.parse(
-        fs.readFileSync("config.json", "utf8")
-    );
 
     config.pdfFolder =
         dateUtils.getPdfFolder(config.pdfRootFolder);
@@ -31,7 +27,7 @@ async function runPayroll(onProgress = () => {}) {
     });
     logger.info("Generating payslips...");
 
-    await appScriptService.generatePayslips();
+    await appScriptService.generatePayslips(config.appsScriptUrl);
 
     onProgress({
         type: "success",
@@ -48,7 +44,7 @@ async function runPayroll(onProgress = () => {}) {
     logger.info("Loading employee data...");
 
     const employees =
-        await employeeService.loadEmployees();
+        await employeeService.loadEmployees(config.appsScriptUrl);
 
 
     onProgress({

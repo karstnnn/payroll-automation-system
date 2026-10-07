@@ -1,6 +1,6 @@
 const fetch = global.fetch;
 
-async function generatePayslips(){
+async function generatePayslips(appsScriptUrl){
 
     console.log(
         "Generating payslips..."
@@ -8,7 +8,7 @@ async function generatePayslips(){
 
     const response =
         await fetch(
-            process.env.APPS_SCRIPT_URL +
+            appsScriptUrl +
             "?action=generate"
         );
 

@@ -1,9 +1,9 @@
 const fs = require("fs");
 
-async function loadEmployees(employeeFile) {
+async function loadEmployees(appsScriptUrl) {
     const response =
         await fetch(
-            process.env.APPS_SCRIPT_URL +
+            appsScriptUrl +
             "?action=employees"
         );
 
