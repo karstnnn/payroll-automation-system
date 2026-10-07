@@ -51,6 +51,11 @@ const pdfRootFolder =
         "pdfRootFolder"
     );
 
+const testConnectionBtn =
+    document.getElementById(
+        "testConnectionBtn"
+    );
+
 function addLog(progress) {
 
     const entry =
@@ -386,6 +391,86 @@ browseFolderBtn.addEventListener(
 
             pdfRootFolder.value =
                 result.folderPath;
+
+        }
+
+    }
+);
+
+testConnectionBtn.addEventListener(
+    "click",
+    async () => {
+
+        const smtpHost =
+            document.getElementById(
+                "smtpHost"
+            ).value.trim();
+
+        const smtpPort =
+            document.getElementById(
+                "smtpPort"
+            ).value;
+
+        const smtpSecure =
+            document.getElementById(
+                "smtpSecure"
+            ).checked;
+
+        const smtpUser =
+            document.getElementById(
+                "smtpUser"
+            ).value.trim();
+
+        const smtpPassword =
+            document.getElementById(
+                "smtpPassword"
+            ).value;
+
+
+        testConnectionBtn.disabled = true;
+
+        settingsStatus.textContent =
+            "Testing email connection...";
+
+
+        try {
+
+            const result =
+                await window.electronAPI
+                    .testEmailConnection({
+                        smtpHost,
+                        smtpPort,
+                        smtpSecure,
+                        smtpUser,
+                        smtpPassword
+                    });
+
+
+            if (result.success) {
+
+                settingsStatus.textContent =
+                    "Email connection successful.";
+
+            }
+            else {
+
+                settingsStatus.textContent =
+                    `Connection failed: ${result.error}`;
+
+            }
+
+        }
+
+        catch (error) {
+
+            settingsStatus.textContent =
+                `Connection failed: ${error.message}`;
+
+        }
+
+        finally {
+
+            testConnectionBtn.disabled = false;
 
         }
 

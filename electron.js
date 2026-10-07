@@ -2,6 +2,7 @@ require("dotenv").config();
 const { app, BrowserWindow, ipcMain, dialog } = require("electron");
 const fs = require("fs");
 const path = require("path");
+const emailService = require("./services/emailService");
 
 const { runPayroll } = require("./app");
 
@@ -258,6 +259,79 @@ ipcMain.handle(
             folderPath:
                 result.filePaths[0]
         };
+
+    }
+);
+
+ipcMain.handle(
+    "test-email-connection",
+    async (event, settings) => {
+
+        try {
+
+            if (!settings.smtpHost) {
+                throw new Error(
+                    "SMTP host is required."
+                );
+            }
+
+            if (!settings.smtpPort) {
+                throw new Error(
+                    "SMTP port is required."
+                );
+            }
+
+            if (!settings.smtpUser) {
+                throw new Error(
+                    "Sender email is required."
+                );
+            }
+
+            if (!settings.smtpPassword) {
+                throw new Error(
+                    "Email password is required."
+                );
+            }
+
+
+            const config = {
+                smtp: {
+                    host: settings.smtpHost,
+                    port: Number(settings.smtpPort),
+                    secure: settings.smtpSecure
+                }
+            };
+
+
+            await emailService.verifyConnection(
+                config,
+                {
+                    user: settings.smtpUser,
+                    password: settings.smtpPassword
+                }
+            );
+
+
+            return {
+                success: true
+            };
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "SMTP connection test failed:",
+                error
+            );
+
+
+            return {
+                success: false,
+                error: error.message
+            };
+
+        }
 
     }
 );

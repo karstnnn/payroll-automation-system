@@ -18,19 +18,51 @@ function createTransporter(config) {
 
 }
 
-async function verifyConnection(config) {
-    logger.info("Verifying SMTP connection...");
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
+async function verifyConnection(
+    config,
+    credentials = {}
+) {
+
+    const smtpUser =
+        credentials.user ||
+        process.env.SMTP_USER;
+
+    const smtpPassword =
+        credentials.password ||
+        process.env.SMTP_PASSWORD;
+
+
+    if (!smtpUser || !smtpPassword) {
+
         throw new Error(
-            "Missing SMTP credentials in .env"
+            "Missing SMTP credentials."
         );
+
     }
 
-    const transporter = createTransporter(config);
+
+    const transporter =
+        nodemailer.createTransport({
+
+            host: config.smtp.host,
+            port: config.smtp.port,
+            secure: config.smtp.secure,
+
+            auth: {
+                user: smtpUser,
+                pass: smtpPassword
+            }
+
+        });
+
 
     await transporter.verify();
-    
-    logger.info("SMTP connection verified successfully.");
+
+
+    console.log(
+        "SMTP connection verified successfully."
+    );
+
 }
 
 async function send(employee, config) {

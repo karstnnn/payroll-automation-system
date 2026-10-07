@@ -23,6 +23,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
         "select-folder"
     ),
 
+    testEmailConnection: (settings) =>
+    ipcRenderer.invoke(
+        "test-email-connection",
+        settings
+    ),
+
     onPayrollProgress: (callback) => {
 
         ipcRenderer.on(
