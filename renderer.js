@@ -31,6 +31,16 @@ const settingsBtn =
 const backBtn =
     document.getElementById("backBtn");
 
+const saveSettingsBtn =
+    document.getElementById(
+        "saveSettingsBtn"
+    );
+
+const settingsStatus =
+    document.getElementById(
+        "settingsStatus"
+    );
+
 function addLog(progress) {
 
     const entry =
@@ -132,6 +142,8 @@ window.electronAPI.onPayrollProgress(
                 "Processing...";
         }
 
+        
+
     }
 );
 
@@ -203,13 +215,68 @@ button.addEventListener(
 
 settingsBtn.addEventListener(
     "click",
-    () => {
+    async () => {
 
         homePage.classList.add("hidden");
 
         settingsPage.classList.remove(
             "hidden"
         );
+
+
+        const result =
+            await window.electronAPI.loadSettings();
+
+
+        if (!result.success) {
+
+            console.error(
+                "Could not load settings:",
+                result.error
+            );
+
+            return;
+        }
+
+
+        const settings =
+            result.settings;
+
+
+        document.getElementById(
+            "pdfRootFolder"
+        ).value =
+            settings.pdfRootFolder;
+
+
+        document.getElementById(
+            "appsScriptUrl"
+        ).value =
+            settings.appsScriptUrl;
+
+
+        document.getElementById(
+            "smtpHost"
+        ).value =
+            settings.smtpHost;
+
+
+        document.getElementById(
+            "smtpPort"
+        ).value =
+            settings.smtpPort;
+
+
+        document.getElementById(
+            "smtpSecure"
+        ).checked =
+            settings.smtpSecure;
+
+
+        document.getElementById(
+            "smtpUser"
+        ).value =
+            settings.smtpUser;
 
     }
 );
@@ -224,6 +291,72 @@ backBtn.addEventListener(
         homePage.classList.remove(
             "hidden"
         );
+
+    }
+);
+
+saveSettingsBtn.addEventListener(
+    "click",
+    async () => {
+
+        const settings = {
+
+            pdfRootFolder:
+                document.getElementById(
+                    "pdfRootFolder"
+                ).value.trim(),
+
+            appsScriptUrl:
+                document.getElementById(
+                    "appsScriptUrl"
+                ).value.trim(),
+
+            smtpHost:
+                document.getElementById(
+                    "smtpHost"
+                ).value.trim(),
+
+            smtpPort:
+                Number(
+                    document.getElementById(
+                        "smtpPort"
+                    ).value
+                ),
+
+            smtpSecure:
+                document.getElementById(
+                    "smtpSecure"
+                ).checked,
+
+            smtpUser:
+                document.getElementById(
+                    "smtpUser"
+                ).value.trim()
+
+        };
+
+
+        settingsStatus.textContent =
+            "Saving settings...";
+
+
+        const result =
+            await window.electronAPI
+                .saveSettings(settings);
+
+
+        if (result.success) {
+
+            settingsStatus.textContent =
+                "Settings saved successfully.";
+
+        }
+        else {
+
+            settingsStatus.textContent =
+                `Error: ${result.error}`;
+
+        }
 
     }
 );
