@@ -148,6 +148,15 @@ function logEmployee(employee) {
 
     }
 
+    else if (employee.emailStatus === "already-sent") {
+
+        write(
+            "WARNING",
+            `${employee.name} - Already Sent, Duplicate Prevented`
+        );
+
+    }
+
     else {
 
         write(

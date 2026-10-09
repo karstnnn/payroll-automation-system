@@ -7,6 +7,7 @@ const appScriptService = require("./services/appScriptService");
 const employeeService = require("./services/employeeService");
 const pdfService = require("./services/pdfService");
 const emailService = require("./services/emailService")
+const runHistoryService = require("./services/runHistoryService");
 
 const dateUtils = require("./utils/dateUtils");
 const logger = require("./utils/logger");
@@ -15,6 +16,7 @@ async function runPayroll(config, onProgress = () => {}) {
 
     logger.info("Payslip process started.");
 
+    const payrollPeriod = dateUtils.getCurrentMonth();
     config.pdfFolder =
         dateUtils.getPdfFolder(config.pdfRootFolder);
 
@@ -95,8 +97,6 @@ async function runPayroll(config, onProgress = () => {}) {
 
         if (!employee.pdfExists) {
 
-            logger.logEmployee(employee);
-
             employee.emailStatus = "skipped";
 
             onProgress({
@@ -107,6 +107,36 @@ async function runPayroll(config, onProgress = () => {}) {
             logger.warning(
                 `${employee.name} - PDF Missing, skipping email.`
             );
+
+            logger.logEmployee(employee);
+
+            continue;
+        }
+
+        const alreadySent =
+            runHistoryService.wasAlreadySent(
+                employee,
+                payrollPeriod
+            );
+
+
+        if (alreadySent) {
+
+            employee.emailStatus =
+                "already-sent";
+
+            onProgress({
+                type: "status",
+
+                message:
+                    `${employee.name} - Already sent previously, skipped`
+            });
+
+
+            logger.warning(
+                `${employee.name} - Duplicate send prevented`
+            );
+
 
             continue;
         }
@@ -125,15 +155,18 @@ async function runPayroll(config, onProgress = () => {}) {
             employee.emailAttempts =
                 emailResult.attempts;
 
+            runHistoryService.markSent(
+                employee,
+                payrollPeriod
+            );
+
             onProgress({
                 type: "success",
                 message:
                     `${employee.name} - Email Sent`
             });
 
-            logger.success(
-                `${employee.name} - Email Sent`
-            );
+            //logger.success(`${employee.name} - Email Sent`);
 
         }
         else {
@@ -146,22 +179,24 @@ async function runPayroll(config, onProgress = () => {}) {
                 emailResult.error?.message ||
                 "Unknown email error";
 
+            runHistoryService.markFailed(
+                employee,
+                payrollPeriod,
+                emailResult.error
+            );
+
             onProgress({
                 type: "error",
                 message:
                     `${employee.name} - Email Failed`
             });
 
-            logger.error(
-                `${employee.name} - Email Failed`,
-                emailResult.error
-            );
+            //logger.error(`${employee.name} - Email Failed`,emailResult.error);
 
         }
 
 
         logger.logEmployee(employee);
-
 
     }
 
@@ -204,6 +239,11 @@ async function runPayroll(config, onProgress = () => {}) {
 
             skipped: employees.filter(
                 employee => employee.emailStatus === "skipped"
+            ).length,
+
+            alreadySent: employees.filter(
+                employee =>
+                    employee.emailStatus === "already-sent"
             ).length
         }
     };
@@ -220,8 +260,14 @@ async function runPayroll(config, onProgress = () => {}) {
 
     onProgress({
         type: "complete",
-        status: overallStatus,
+        status:
+            processSummary.email.failed === 0 &&
+            processSummary.pdf.missing === 0
+                ? "success"
+                : "warning",
+
         message: "Payslip process completed.",
+
         summary: processSummary
     });
 

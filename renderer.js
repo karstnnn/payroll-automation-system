@@ -56,6 +56,11 @@ const testConnectionBtn =
         "testConnectionBtn"
     );
 
+const alreadySentCount =
+    document.getElementById(
+        "alreadySentCount"
+    );
+
 function addLog(progress) {
 
     const entry =
@@ -136,6 +141,9 @@ window.electronAPI.onPayrollProgress(
 
                 skippedCount.textContent =
                     progress.summary.email.skipped;
+
+                alreadySentCount.textContent =
+                    progress.summary.email.alreadySent;
 
                 summaryPanel.classList.remove(
                     "hidden"
