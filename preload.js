@@ -34,9 +34,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
         ipcRenderer.on(
             "payroll-progress",
             (event, progress) => {
-
                 callback(progress);
-
             }
         );
 

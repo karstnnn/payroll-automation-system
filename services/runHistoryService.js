@@ -11,7 +11,7 @@ const appData =
 const historyFolder =
     path.join(
         appData,
-        "Payslip Automation",
+        "pay-slip",
         "history"
     );
 

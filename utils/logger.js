@@ -9,7 +9,7 @@ const appData =
 
 const logFolder = path.join(
     appData,
-    "Payslip Automation",
+    "pay-slip",
     "logs"
 );
 

@@ -13,9 +13,29 @@ function createWindow() {
         height: 700,
 
         webPreferences: {
-            preload: path.join(__dirname, "preload.js")
+            preload: path.join(__dirname, "preload.js"),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            webSecurity: true
         }
     });
+
+    window.webContents.setWindowOpenHandler(
+        () => {
+            return {
+                action: "deny"
+            };
+        }
+    );
+
+
+    window.webContents.on(
+        "will-navigate",
+        (event) => {
+            event.preventDefault();
+        }
+    );
 
     window.loadFile("index.html");
 }
@@ -487,6 +507,21 @@ ipcMain.handle(
 );
 
 app.whenReady().then(() => {
+
+    console.log(
+        "Electron userData:",
+        app.getPath("userData")
+    );
+
+    console.log(
+        "Settings file:",
+        getSettingsPath()
+    );
+
+    console.log(
+        "Credentials file:",
+        getCredentialsPath()
+    );
 
     createWindow();
 

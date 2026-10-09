@@ -485,6 +485,10 @@ testConnectionBtn.addEventListener(
 
                 settingsStatus.textContent =
                     "Email connection successful.";
+                
+                document.getElementById(
+                    "smtpPassword"
+                ).value = "";
 
             }
             else {
