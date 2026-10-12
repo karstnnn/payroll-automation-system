@@ -345,9 +345,49 @@ ipcMain.handle(
                     settings.smtpSecure,
 
                 smtpUser:
-                    settings.smtpUser
+                    settings.smtpUser,
+                
+                summaryRecipientEmail:
+                    settings.summaryRecipientEmail,
+
+                summarySenderMode:
+                    settings.summarySenderMode,
+
+                summarySenderEmail:
+                    settings.summarySenderEmail
 
             };
+
+            if (
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                    settings.summaryRecipientEmail || ""
+                )
+            ) {
+                throw new Error(
+                    "A valid accountant email address is required."
+                );
+            }
+
+            if (
+                !["same", "separate"].includes(
+                    settings.summarySenderMode
+                )
+            ) {
+                throw new Error(
+                    "Invalid payroll summary sender mode."
+                );
+            }
+
+            if (
+                settings.summarySenderMode === "separate" &&
+                !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+                    settings.summarySenderEmail || ""
+                )
+            ) {
+                throw new Error(
+                    "A valid payroll summary sender email is required."
+                );
+            }
 
             fs.writeFileSync(
                 settingsPath,

@@ -336,6 +336,78 @@
 
                 </div>
 
+                <h3>Payroll Summary</h3>
+
+                <div class="form-group">
+
+                    <label for="summaryRecipientEmail">
+                        Accountant's Email Address
+                    </label>
+
+                    <input
+                        type="email"
+                        id="summaryRecipientEmail"
+                        placeholder="accountant@company.com"
+                    >
+
+                </div>
+
+
+                <div class="form-group">
+
+                    <label for="summarySenderMode">
+                        Sender Account
+                    </label>
+
+                    <select id="summarySenderMode">
+
+                        <option value="same">
+                            Use existing payslip sender
+                        </option>
+
+                        <option value="separate">
+                            Use a different email account
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div
+                    id="summarySenderFields"
+                    class="hidden"
+                >
+
+                    <div class="form-group">
+
+                        <label for="summarySenderEmail">
+                            Payroll Summary Sender Email
+                        </label>
+
+                        <input
+                            type="email"
+                            id="summarySenderEmail"
+                            placeholder="finance@company.com"
+                        >
+
+                    </div>
+
+                    <div class="form-group">
+
+                        <label for="summarySenderPassword">
+                            Sender Password
+                        </label>
+
+                        <input
+                            type="password"
+                            id="summarySenderPassword"
+                            placeholder="Enter sender password"
+                        >
+
+                    </div>
+
+                </div>
 
                 <div class="settings-actions">
 

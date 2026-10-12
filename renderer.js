@@ -61,6 +61,17 @@ const alreadySentCount =
         "alreadySentCount"
     );
 
+const summarySenderMode =
+    document.getElementById(
+        "summarySenderMode"
+    );
+
+const summarySenderFields =
+    document.getElementById(
+        "summarySenderFields"
+    );
+
+
 function addLog(progress) {
 
     const entry =
@@ -301,6 +312,19 @@ settingsBtn.addEventListener(
         ).value =
             settings.smtpUser;
 
+        document.getElementById(
+            "summaryRecipientEmail"
+        ).value = settings.summaryRecipientEmail || "";
+
+        summarySenderMode.value =
+            settings.summarySenderMode || "same";
+
+        document.getElementById(
+            "summarySenderEmail"
+        ).value = settings.summarySenderEmail || "";
+
+        updateSummarySenderFields();
+        
         const passwordInput =
             document.getElementById(
                 "smtpPassword"
@@ -377,7 +401,22 @@ saveSettingsBtn.addEventListener(
             smtpPassword:
                 document.getElementById(
                     "smtpPassword"
-                ).value
+                ).value,
+            
+            summaryRecipientEmail:
+                document.getElementById(
+                    "summaryRecipientEmail"
+                ).value.trim(),
+
+            summarySenderMode:
+                document.getElementById(
+                    "summarySenderMode"
+                ).value,
+
+            summarySenderEmail:
+                document.getElementById(
+                    "summarySenderEmail"
+                ).value.trim()
 
         };
 
@@ -514,4 +553,21 @@ testConnectionBtn.addEventListener(
         }
 
     }
+);
+
+function updateSummarySenderFields() {
+
+    const useSeparateSender =
+        summarySenderMode.value === "separate";
+
+    summarySenderFields.classList.toggle(
+        "hidden",
+        !useSeparateSender
+    );
+}
+
+
+summarySenderMode.addEventListener(
+    "change",
+    updateSummarySenderFields
 );
