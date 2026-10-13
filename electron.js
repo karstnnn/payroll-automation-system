@@ -56,6 +56,15 @@ function getCredentialsPath() {
     );
 }
 
+function getSummaryCredentialsPath() {
+
+    return path.join(
+        app.getPath("userData"),
+        "summary-credentials.dat"
+    );
+
+}
+
 function getRuntimeConfig() {
 
     const settingsPath =
@@ -134,7 +143,6 @@ function savePassword(password) {
     );
 }
 
-
 function loadPassword() {
 
     const credentialsPath =
@@ -162,6 +170,53 @@ function loadPassword() {
     return safeStorage.decryptString(
         encrypted
     );
+}
+
+function saveSummaryPassword(password) {
+
+    if (!safeStorage.isEncryptionAvailable()) {
+        throw new Error(
+            "Secure credential storage is not available."
+        );
+    }
+
+    const encrypted =
+        safeStorage.encryptString(password);
+
+    fs.writeFileSync(
+        getSummaryCredentialsPath(),
+        encrypted.toString("base64"),
+        "utf8"
+    );
+
+}
+
+function loadSummaryPassword() {
+
+    const credentialsPath =
+        getSummaryCredentialsPath();
+
+    if (!fs.existsSync(credentialsPath)) {
+        return "";
+    }
+
+    if (!safeStorage.isEncryptionAvailable()) {
+        throw new Error(
+            "Secure credential storage is not available."
+        );
+    }
+
+    const encrypted =
+        Buffer.from(
+            fs.readFileSync(
+                credentialsPath,
+                "utf8"
+            ),
+            "base64"
+        );
+
+    return safeStorage.decryptString(encrypted);
+
 }
 
 ipcMain.handle("run-payroll", async (event) => {
@@ -218,7 +273,11 @@ ipcMain.handle(
 
                 return {
                     success: true,
-                    settings
+                    settings: {
+                        ...settings,
+                        hasSavedPassword: fs.existsSync(getCredentialsPath()),
+                        hasSavedSummaryPassword: fs.existsSync(getSummaryCredentialsPath())
+                    }
                 };
             }
 
@@ -264,6 +323,11 @@ ipcMain.handle(
                     hasSavedPassword:
                         fs.existsSync(
                             getCredentialsPath()
+                        ),
+
+                    hasSavedSummaryPassword:
+                        fs.existsSync(
+                            getSummaryCredentialsPath()
                         )
 
                 }
@@ -354,6 +418,15 @@ ipcMain.handle(
                     settings.summarySenderMode,
 
                 summarySenderEmail:
+                    settings.summarySenderEmail,
+                
+                summaryRecipientEmail:
+                    settings.summaryRecipientEmail,
+
+                summarySenderMode:
+                    settings.summarySenderMode,
+
+                summarySenderEmail:
                     settings.summarySenderEmail
 
             };
@@ -387,6 +460,45 @@ ipcMain.handle(
                 throw new Error(
                     "A valid payroll summary sender email is required."
                 );
+            }
+
+
+            if (settings.summarySenderMode === "separate") {
+
+                const existingSettings =
+                    fs.existsSync(settingsPath)
+                        ? JSON.parse(
+                            fs.readFileSync(settingsPath, "utf8")
+                        )
+                        : {};
+
+                const senderChanged =
+                    (existingSettings.summarySenderEmail || "")
+                        .trim()
+                        .toLowerCase() !==
+                    (settings.summarySenderEmail || "")
+                        .trim()
+                        .toLowerCase();
+
+                const hasSavedPassword =
+                    fs.existsSync(getSummaryCredentialsPath());
+
+                if (
+                    !settings.summarySenderPassword &&
+                    (!hasSavedPassword || senderChanged)
+                ) {
+                    throw new Error(
+                        "Enter the password for the payroll summary sender."
+                    );
+                }
+
+                if (settings.summarySenderPassword) {
+
+                    saveSummaryPassword(
+                        settings.summarySenderPassword
+                    );
+
+                }
             }
 
             fs.writeFileSync(
@@ -549,19 +661,16 @@ ipcMain.handle(
 app.whenReady().then(() => {
 
     console.log(
-        "Electron userData:",
-        app.getPath("userData")
+        "Summary password exists:",
+        fs.existsSync(getSummaryCredentialsPath())
     );
 
     console.log(
-        "Settings file:",
-        getSettingsPath()
+        "Summary credentials path:",
+        getSummaryCredentialsPath()
     );
 
-    console.log(
-        "Credentials file:",
-        getCredentialsPath()
-    );
+    
 
     createWindow();
 

@@ -399,11 +399,21 @@
                             Sender Password
                         </label>
 
-                        <input
+                         <input
                             type="password"
                             id="summarySenderPassword"
-                            placeholder="Enter sender password"
+                            placeholder="Leave blank to keep saved password"
                         >
+
+                        <div
+                            id="summaryPasswordStatus"
+                            class="credential-status"
+                            role="status"
+                        >
+                            <span id="summaryPasswordStatusIcon"></span>
+
+                            <span id="summaryPasswordStatusText"></span>
+                        </div>
 
                     </div>
 

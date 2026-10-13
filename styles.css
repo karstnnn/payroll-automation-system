@@ -810,3 +810,30 @@ h1 {
 
     color: #667085;
 }
+
+/* =========================
+   CREDENTIAL STATUS
+   ========================= */
+
+.credential-status {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+
+    margin-top: 2px;
+
+    font-size: 12px;
+    font-weight: 500;
+}
+
+.credential-status.saved {
+    color: #12b76a;
+}
+
+.credential-status.missing {
+    color: #98a2b3;
+}
+
+.credential-status span:first-child {
+    font-size: 14px;
+}

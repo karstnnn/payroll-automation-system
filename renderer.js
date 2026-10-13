@@ -71,6 +71,22 @@ const summarySenderFields =
         "summarySenderFields"
     );
 
+const summaryPasswordStatus =
+    document.getElementById(
+        "summaryPasswordStatus"
+    );
+
+const summaryPasswordStatusIcon =
+    document.getElementById(
+        "summaryPasswordStatusIcon"
+    );
+
+const summaryPasswordStatusText =
+    document.getElementById(
+        "summaryPasswordStatusText"
+    );
+
+
 
 function addLog(progress) {
 
@@ -277,6 +293,24 @@ settingsBtn.addEventListener(
             result.settings;
 
 
+        updateSummaryPasswordStatus(
+                settings.hasSavedSummaryPassword === true
+            );
+
+        /*
+        const summaryPasswordInput =
+            document.getElementById(
+                "summarySenderPassword"
+            );
+
+        summaryPasswordInput.value = "";
+
+        summaryPasswordInput.placeholder =
+            settings.hasSavedSummaryPassword
+                ? "Saved password"
+                : "Enter sender password";
+                */
+
         document.getElementById(
             "pdfRootFolder"
         ).value =
@@ -342,6 +376,8 @@ settingsBtn.addEventListener(
                 "Enter email password";
 
         }
+
+
 
     }
 );
@@ -416,7 +452,12 @@ saveSettingsBtn.addEventListener(
             summarySenderEmail:
                 document.getElementById(
                     "summarySenderEmail"
-                ).value.trim()
+                ).value.trim(),
+
+            summarySenderPassword:
+                document.getElementById(
+                    "summarySenderPassword"
+                ).value
 
         };
 
@@ -439,6 +480,27 @@ saveSettingsBtn.addEventListener(
                 "smtpPassword"
             ).value = "";
 
+            document.getElementById(
+                "summarySenderPassword"
+            ).value = "";
+
+            const refreshed =
+                await window.electronAPI.loadSettings();
+
+            if (refreshed.success) {
+
+                const hasPassword =
+                    refreshed.settings.hasSavedSummaryPassword === true;
+
+                updateSummaryPasswordStatus(hasPassword);
+
+                document.getElementById(
+                    "summarySenderPassword"
+                ).placeholder = hasPassword
+                    ? "Leave blank to keep saved password"
+                    : "Enter sender password";
+
+            }
         }
         else {
 
@@ -571,3 +633,36 @@ summarySenderMode.addEventListener(
     "change",
     updateSummarySenderFields
 );
+
+function updateSummaryPasswordStatus(hasSavedPassword) {
+
+    summaryPasswordStatus.classList.remove(
+        "saved",
+        "missing"
+    );
+
+    if (hasSavedPassword) {
+
+        summaryPasswordStatus.classList.add(
+            "saved"
+        );
+
+        summaryPasswordStatusIcon.textContent = "✓";
+
+        summaryPasswordStatusText.textContent =
+            "Encrypted password saved";
+
+    }
+    else {
+
+        summaryPasswordStatus.classList.add(
+            "missing"
+        );
+
+        summaryPasswordStatusIcon.textContent = "○";
+
+        summaryPasswordStatusText.textContent =
+            "No password saved";
+
+    }
+}
