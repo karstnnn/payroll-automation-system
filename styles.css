@@ -837,3 +837,18 @@ h1 {
 .credential-status span:first-child {
     font-size: 14px;
 }
+
+.summary-action {
+    margin-top: 16px;
+}
+
+.summary-action .secondary-btn {
+    font-size: 14px;
+}
+
+#summaryPreparationDetails {
+    margin-top: 10px;
+    font-size: 12px;
+    line-height: 1.8;
+    color: #475467;
+}

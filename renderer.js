@@ -96,6 +96,15 @@ const summaryConnectionStatus =
         "summaryConnectionStatus"
     );
 
+const prepareSummaryBtn =
+    document.getElementById("prepareSummaryBtn");
+
+const summaryPreparationStatus =
+    document.getElementById("summaryPreparationStatus");
+
+const summaryPreparationDetails =
+    document.getElementById("summaryPreparationDetails");
+
 testSummaryConnectionBtn.addEventListener(
     "click",
     async () => {
@@ -720,3 +729,76 @@ function updateSummaryPasswordStatus(hasSavedPassword) {
 
     }
 }
+
+
+window.electronAPI.onPayrollSummaryProgress(
+    (progress) => {
+        summaryPreparationStatus.textContent =
+            progress.message;
+    }
+);
+
+prepareSummaryBtn.addEventListener(
+    "click",
+    async () => {
+
+        prepareSummaryBtn.disabled = true;
+        summaryPreparationDetails.classList.add("hidden");
+
+        summaryPreparationStatus.textContent =
+            "Preparing payroll summary...";
+
+        try {
+
+            const result =
+                await window.electronAPI.preparePayrollSummary();
+
+            if (!result.success) {
+                throw new Error(result.error);
+            }
+
+            const report = result.report;
+
+            document.getElementById(
+                "summaryReportName"
+            ).textContent =
+                `File: ${report.fileName}`;
+
+            document.getElementById(
+                "summaryReportPeriod"
+            ).textContent =
+                `Period: ${report.month}`;
+
+            document.getElementById(
+                "summaryReportSender"
+            ).textContent =
+                `Sender: ${report.sender}`;
+
+            document.getElementById(
+                "summaryReportRecipient"
+            ).textContent =
+                `Recipient: ${report.recipient}`;
+
+            summaryPreparationDetails.classList.remove(
+                "hidden"
+            );
+
+            summaryPreparationStatus.textContent =
+                "Payroll summary generated and validated successfully.";
+
+        }
+        catch (error) {
+
+            summaryPreparationStatus.textContent =
+                `Error: ${error.message}`;
+
+        }
+        finally {
+
+            prepareSummaryBtn.disabled = false;
+
+        }
+
+    }
+);
+

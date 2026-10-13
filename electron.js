@@ -3,8 +3,12 @@ const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require("electron")
 const fs = require("fs");
 const path = require("path");
 const emailService = require("./services/emailService");
+const {preparePayrollSummary} = require("./services/payrollSummaryService");
 
 const { runPayroll } = require("./app");
+
+let isPreparingSummary = false;
+let preparedSummary = null;
 
 function createWindow() {
 
@@ -251,6 +255,104 @@ ipcMain.handle("run-payroll", async (event) => {
     }
 
 });
+
+
+ipcMain.handle(
+    "prepare-payroll-summary",
+    async (event) => {
+
+        if (isPreparingSummary) {
+            return {
+                success: false,
+                error: "Payroll summary generation is already running."
+            };
+        }
+
+        isPreparingSummary = true;
+        preparedSummary = null;
+
+        try {
+
+            const settingsPath = getSettingsPath();
+
+            if (!fs.existsSync(settingsPath)) {
+                throw new Error("Settings have not been configured.");
+            }
+
+            const settings = JSON.parse(
+                fs.readFileSync(settingsPath, "utf8")
+            );
+
+            if (!["same", "separate"].includes(settings.summarySenderMode)) {
+                throw new Error("Invalid payroll summary sender mode.");
+            }
+
+            const recipient = settings.summaryRecipientEmail;
+
+            const sender = settings.summarySenderMode === "separate"
+                ? settings.summarySenderEmail
+                : settings.smtpUser;
+
+            const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+            if (!validEmail.test(recipient || "")) {
+                throw new Error("A valid accountant email is required.");
+            }
+
+            if (!validEmail.test(sender || "")) {
+                throw new Error("A valid sender email is required.");
+            }
+
+            const result = await preparePayrollSummary(
+                {
+                    appsScriptUrl: settings.appsScriptUrl,
+                    pdfRootFolder: settings.pdfRootFolder
+                },
+                (progress) => {
+                    event.sender.send(
+                        "payroll-summary-progress",
+                        progress
+                    );
+                }
+            );
+
+            preparedSummary = {
+                ...result,
+                recipient,
+                sender,
+                senderMode: settings.summarySenderMode
+            };
+
+            return {
+                success: true,
+                report: {
+                    month: result.month,
+                    fileName: result.fileName,
+                    recipient,
+                    sender
+                }
+            };
+
+        }
+        catch (error) {
+
+            console.error(
+                "Payroll summary preparation failed:",
+                error
+            );
+
+            return {
+                success: false,
+                error: error.message
+            };
+
+        }
+        finally {
+            isPreparingSummary = false;
+        }
+    }
+);
+
 
 ipcMain.handle(
     "load-settings",

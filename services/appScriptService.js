@@ -35,8 +35,37 @@ async function generatePayslips(appsScriptUrl){
 
 }
 
+async function generatePayrollSummary(appsScriptUrl) {
+
+    console.log("Generating payroll summary...");
+
+    const response = await fetch(
+        appsScriptUrl + "?action=generate-payroll"
+    );
+
+    if (!response.ok) {
+        throw new Error(
+            "Failed to execute Payroll Summary Apps Script."
+        );
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+        throw new Error(
+            result.error || "Payroll summary generation failed."
+        );
+    }
+
+    console.log(
+        `Payroll summary generated: ${result.fileName}`
+    );
+
+    return result;
+}
+
 module.exports = {
 
-    generatePayslips
-
+    generatePayslips,
+    generatePayrollSummary
 }

@@ -34,6 +34,17 @@ contextBridge.exposeInMainWorld("electronAPI", {
         "test-summary-email-connection"
     ),
 
+    preparePayrollSummary: () =>
+        ipcRenderer.invoke(
+            "prepare-payroll-summary"
+    ),
+
+    onPayrollSummaryProgress: (callback) =>
+        ipcRenderer.on(
+            "payroll-summary-progress",
+            (_event, progress) => callback(progress)
+    ),
+
     onPayrollProgress: (callback) => {
 
         ipcRenderer.on(
