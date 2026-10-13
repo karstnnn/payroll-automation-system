@@ -86,6 +86,60 @@ const summaryPasswordStatusText =
         "summaryPasswordStatusText"
     );
 
+const testSummaryConnectionBtn =
+    document.getElementById(
+        "testSummaryConnectionBtn"
+    );
+
+const summaryConnectionStatus =
+    document.getElementById(
+        "summaryConnectionStatus"
+    );
+
+testSummaryConnectionBtn.addEventListener(
+    "click",
+    async () => {
+
+        testSummaryConnectionBtn.disabled = true;
+
+        summaryConnectionStatus.textContent =
+            "Testing payroll summary email connection...";
+
+        try {
+
+            const result =
+                await window.electronAPI
+                    .testSummaryEmailConnection();
+
+            if (result.success) {
+
+                summaryConnectionStatus.textContent =
+                    `Connection successful: ${result.sender}`;
+
+            }
+            else {
+
+                summaryConnectionStatus.textContent =
+                    `Connection failed: ${result.error}`;
+
+            }
+
+        }
+        catch (error) {
+
+            summaryConnectionStatus.textContent =
+                `Connection failed: ${error.message}`;
+
+        }
+        finally {
+
+            testSummaryConnectionBtn.disabled = false;
+
+        }
+
+    }
+);
+
 
 
 function addLog(progress) {

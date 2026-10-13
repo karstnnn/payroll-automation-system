@@ -658,6 +658,86 @@ ipcMain.handle(
     }
 );
 
+ipcMain.handle(
+    "test-summary-email-connection",
+    async () => {
+
+        try {
+
+            const settings = JSON.parse(
+                fs.readFileSync(
+                    getSettingsPath(),
+                    "utf8"
+                )
+            );
+
+            const useSeparateSender =
+                settings.summarySenderMode === "separate";
+
+            if (
+                !["same", "separate"].includes(
+                    settings.summarySenderMode
+                )
+            ) {
+                throw new Error(
+                    "Invalid payroll summary sender mode."
+                );
+            }
+
+            const smtpUser = useSeparateSender
+                ? settings.summarySenderEmail
+                : settings.smtpUser;
+
+            const smtpPassword = useSeparateSender
+                ? loadSummaryPassword()
+                : loadPassword();
+
+            if (!smtpUser || !smtpPassword) {
+                throw new Error(
+                    "Sender email or saved password is missing."
+                );
+            }
+
+            const config = {
+                smtp: {
+                    host: settings.smtpHost,
+                    port: Number(settings.smtpPort),
+                    secure: settings.smtpSecure
+                }
+            };
+
+            await emailService.verifyConnection(
+                config,
+                {
+                    user: smtpUser,
+                    password: smtpPassword
+                }
+            );
+
+            return {
+                success: true,
+                sender: smtpUser
+            };
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Payroll summary SMTP test failed:",
+                error
+            );
+
+            return {
+                success: false,
+                error: error.message
+            };
+
+        }
+
+    }
+);
+
 app.whenReady().then(() => {
 
     console.log(

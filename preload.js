@@ -29,6 +29,11 @@ contextBridge.exposeInMainWorld("electronAPI", {
         settings
     ),
 
+    testSummaryEmailConnection: () =>
+    ipcRenderer.invoke(
+        "test-summary-email-connection"
+    ),
+
     onPayrollProgress: (callback) => {
 
         ipcRenderer.on(
