@@ -235,8 +235,89 @@ async function sendWithRetry(
 
 }
 
+
+async function sendPayrollSummary(report, config) {
+
+    const {
+        recipient,
+        month,
+        fileName,
+        pdfPath
+    } = report;
+
+    if (!recipient || !month || !fileName || !pdfPath) {
+        throw new Error(
+            "Incomplete payroll summary email information."
+        );
+    }
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(recipient)) {
+        throw new Error(
+            "Invalid payroll summary recipient email."
+        );
+    }
+
+    if (!config.smtpUser || !config.smtpPassword) {
+        throw new Error(
+            "Payroll summary SMTP credentials are missing."
+        );
+    }
+
+    const transporter = createTransporter(config);
+
+    const subject = `Payroll Summary - ${month}`;
+
+    const body =
+        `Good day,\n\n` +
+        `Please find attached the payroll summary for ${month}.\n\n` +
+        `This document contains confidential payroll information. ` +
+        `Please handle it accordingly.\n\n` +
+        `Best regards,\n` +
+        `Payroll Department`;
+
+    const info = await transporter.sendMail({
+
+        from: config.smtpUser,
+
+        to: recipient,
+
+        subject: subject,
+
+        text: body,
+
+        attachments: [
+            {
+                filename: fileName,
+                path: pdfPath,
+                contentType: "application/pdf"
+            }
+        ]
+    });
+
+    if (
+        !info.accepted ||
+        !info.accepted.some(
+            email => email.toLowerCase() === recipient.toLowerCase()
+        )
+    ) {
+        throw new Error(
+            "The SMTP server did not accept the recipient."
+        );
+    }
+
+    return {
+        success: true,
+        messageId: info.messageId
+    };
+}
+
+
 module.exports = {
   send,
   verifyConnection,
-  sendWithRetry
+  sendWithRetry,
+  sendPayrollSummary
 }
+
