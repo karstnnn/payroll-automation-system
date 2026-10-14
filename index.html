@@ -18,208 +18,231 @@
 
     <main class="app">
 
-        <section id="homePage" class="hero page">
+        
+    <section id="homePage" class="page dashboard-page">
 
-            <div class="content">
+        <div class="dashboard-shell">
 
-                <h1>Payslip Automation</h1>
+            <!-- HEADER -->
+            <header class="dashboard-header">
+
+                <div>
+                    <h1>Payslip Automation</h1>
+
+                    <p class="subtitle">
+                        Manage employee payslips and payroll reports.
+                    </p>
+                </div>
 
                 <button
                     id="settingsBtn"
                     class="settings-btn"
+                    type="button"
                     title="Settings"
+                    aria-label="Open settings"
                 >
                     ⚙
                 </button>
 
-                <p class="subtitle">
-                    Generate and send employee payslips automatically.
-                </p>
+            </header>
 
-                <button
-                    id="generateBtn"
-                    class="generate-btn"
-                >
-                    <span class="button-icon">
 
-                        <svg
-                            width="28"
-                            height="28"
-                            viewBox="0 0 32 32"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
+            <!-- WORKFLOW CARDS -->
+            <div class="workflow-grid">
+
+                <!-- EMPLOYEE PAYSLIPS -->
+                <article class="workflow-card">
+
+                    <div class="workflow-card-header">
+                        <h2>Employee Payslips</h2>
+
+                        <p>
+                            Generate and email individual
+                            employee payslips.
+                        </p>
+                    </div>
+
+                    <div class="workflow-actions">
+
+                        <button
+                            id="generateBtn"
+                            type="button"
+                            class="generate-btn"
                         >
-                            <path
-                                d="M6 3.5H18L25 10.5V27.5C25 28.05 24.55 28.5 24 28.5H6C5.45 28.5 5 28.05 5 27.5V4.5C5 3.95 5.45 3.5 6 3.5Z"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linejoin="round"
-                            />
+                            Generate &amp; Send Payslips
+                        </button>
 
-                            <path
-                                d="M18 3.5V10.5H25"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linejoin="round"
-                            />
-                            
-                        </svg>
+                    </div>
 
-                    </span>
+                </article>
 
-                    <span>
-                        Generate &amp; Send Payslips
-                    </span>
-                </button>
 
-                <div class="summary-action">
+                <!-- PAYROLL SUMMARY -->
+                <article class="workflow-card">
 
-                    <button
-                        id="prepareSummaryBtn"
-                        type="button"
-                        class="secondary-btn"
-                    >
-                        Generate Payroll Summary
-                    </button>
+                    <div class="workflow-card-header">
+                        <h2>Payroll Summary</h2>
 
-                    <p
-                        id="summaryPreparationStatus"
-                        class="settings-status"
-                        role="status"
-                    ></p>
+                        <p>
+                            Generate and email the consolidated
+                            payroll report to the accountant.
+                        </p>
+                    </div>
 
-                    
-                <div
-                    id="summaryPreparationDetails"
-                    class="hidden"
-                >
-                    <p id="summaryReportName"></p>
-                    <p id="summaryReportPeriod"></p>
-                    <p id="summaryReportSender"></p>
-                    <p id="summaryReportRecipient"></p>
+                    <div class="workflow-actions">
 
-                    <div class="summary-send-actions">
+                        <button
+                            id="prepareSummaryBtn"
+                            type="button"
+                            class="secondary-btn"
+                        >
+                            Generate Report
+                        </button>
+
                         <button
                             id="sendSummaryBtn"
                             type="button"
                             class="generate-btn"
                             disabled
                         >
-                            Send Payroll Summary
+                            Send Report
                         </button>
+
                     </div>
+
+                </article>
+
+            </div>
+
+
+            <!-- SHARED ACTIVITY & STATUS -->
+            <section
+                class="status-panel activity-panel"
+                aria-labelledby="activityHeading"
+            >
+
+                <div class="status-header">
+
+                    <div class="activity-heading">
+
+                        <strong id="activityHeading">
+                            Activity &amp; Status
+                        </strong>
+
+                        <span id="activeWorkflowLabel">
+                            No operation selected
+                        </span>
+
+                    </div>
+
+                    <span id="processStatus" role="status">
+                        Ready
+                    </span>
+
                 </div>
 
 
-                </div>
+                <div class="activity-content">
 
-                <div class="status-panel">
+                    <!-- EMPLOYEE PAYSLIP RESULTS -->
+                    <div
+                        id="summaryPanel"
+                        class="summary-panel hidden"
+                    >
 
-                    <div class="status-header">
-                        <span>Process Status</span>
-                        <span id="processStatus">Ready</span>
+                        <div class="summary-item">
+                            <span
+                                id="sentCount"
+                                class="summary-number success-number"
+                            >0</span>
+
+                            <span class="summary-label">
+                                Sent
+                            </span>
+                        </div>
+
+                        <div class="summary-item">
+                            <span
+                                id="failedCount"
+                                class="summary-number failed-number"
+                            >0</span>
+
+                            <span class="summary-label">
+                                Failed
+                            </span>
+                        </div>
+
+                        <div class="summary-item">
+                            <span
+                                id="skippedCount"
+                                class="summary-number skipped-number"
+                            >0</span>
+
+                            <span class="summary-label">
+                                Skipped
+                            </span>
+                        </div>
+
+                        <div class="summary-item">
+                            <span
+                                id="alreadySentCount"
+                                class="summary-number"
+                            >0</span>
+
+                            <span class="summary-label">
+                                Already Sent
+                            </span>
+                        </div>
+
                     </div>
 
-                    <div id="summaryPanel" class="summary-panel hidden">
 
-                    <div class="summary-item">
-                        <span id="sentCount" class="summary-number success-number">
-                            0
-                        </span>
-                        <span class="summary-label">
-                            Sent
-                        </span>
+                    <!-- PAYROLL SUMMARY STATUS -->
+                    <p
+                        id="summaryPreparationStatus"
+                        class="summary-preparation-status hidden"
+                        role="status"
+                    ></p>
+
+
+                    <!-- PAYROLL SUMMARY REPORT DETAILS -->
+                    <div
+                        id="summaryPreparationDetails"
+                        class="summary-report-details hidden"
+                    >
+
+                        <p id="summaryReportName"></p>
+                        <p id="summaryReportPeriod"></p>
+                        <p id="summaryReportSender"></p>
+                        <p id="summaryReportRecipient"></p>
+
                     </div>
 
-                    <div class="summary-item">
-                        <span id="failedCount" class="summary-number failed-number">
-                            0
-                        </span>
-                        <span class="summary-label">
-                            Failed
-                        </span>
+
+                    <div class="activity-log-heading">
+                        Activity Log
                     </div>
-
-                    <div class="summary-item">
-                        <span id="skippedCount" class="summary-number skipped-number">
-                            0
-                        </span>
-                        <span class="summary-label">
-                            Skipped
-                        </span>
-                    </div>
-
-                    <div class="summary-item">
-                        <span
-                            id="alreadySentCount"
-                            class="summary-number"
-                        >
-                            0
-                        </span>
-
-                        <span class="summary-label">
-                            Already Sent
-                        </span>
-                    </div>
-
-                </div>
 
                     <div
                         id="logContainer"
                         class="log-container"
-                    ></div>
-
-                </div>
-
-            </div>
-
-            <div class="illustration">
-
-                <div class="paper paper-back"></div>
-
-                <div class="paper">
-
-                    <div class="paper-lines">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-
-                    <div class="paper-section">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-
-                    <div class="paper-section short">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                    </div>
-
-                    <div class="signature">
-                        <svg
-                            viewBox="0 0 100 40"
-                            xmlns="http://www.w3.org/2000/svg"
-                        >
-                            <path
-                                d="M5 30
-                                   C15 10, 20 35, 28 22
-                                   C35 10, 37 30, 45 25
-                                   C52 20, 54 10, 60 17
-                                   C67 25, 73 28, 80 18
-                                   C85 10, 90 14, 95 8"
-                            />
-                        </svg>
+                        role="log"
+                        aria-live="polite"
+                        aria-relevant="additions"
+                    >
+                        <p class="log-placeholder">
+                            No activity yet. Choose an operation above.
+                        </p>
                     </div>
 
                 </div>
 
-            </div>
+            </section>
 
-        </section>
+        </div>
+
+    </section>
+
 
         <section
             id="settingsPage"

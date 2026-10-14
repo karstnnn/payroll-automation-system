@@ -108,6 +108,62 @@ const summaryPreparationDetails =
 const sendSummaryBtn =
     document.getElementById("sendSummaryBtn");
 
+
+const activeWorkflowLabel =
+    document.getElementById("activeWorkflowLabel");
+
+let displayedWorkflow = null;
+let operationRunning = false;
+let summaryReadyToSend = false;
+
+
+function updateWorkflowButtons() {
+
+    button.disabled = operationRunning;
+
+    prepareSummaryBtn.disabled = operationRunning;
+
+    sendSummaryBtn.disabled =
+        operationRunning || !summaryReadyToSend;
+}
+
+
+function showActivity(workflow, clearLog = true) {
+
+    const changed = displayedWorkflow !== workflow;
+
+    displayedWorkflow = workflow;
+
+    activeWorkflowLabel.textContent =
+        workflow === "payslips"
+            ? "Employee Payslips"
+            : "Payroll Summary";
+
+    summaryPanel.classList.add("hidden");
+
+    summaryPreparationStatus.classList.toggle(
+        "hidden",
+        workflow !== "summary"
+    );
+
+    if (workflow === "payslips") {
+
+        summaryPreparationDetails.classList.add("hidden");
+
+    }
+    else if (
+        document.getElementById("summaryReportName").textContent
+    ) {
+
+        summaryPreparationDetails.classList.remove("hidden");
+    }
+
+    if (clearLog || changed) {
+        logContainer.replaceChildren();
+    }
+}
+
+
 testSummaryConnectionBtn.addEventListener(
     "click",
     async () => {
@@ -268,11 +324,12 @@ button.addEventListener(
     "click",
     async () => {
 
-        button.disabled = true;
+        if (operationRunning) return;
 
-        logContainer.innerHTML = "";
+        operationRunning = true;
 
-        summaryPanel.classList.add("hidden");
+        updateWorkflowButtons();
+        showActivity("payslips");
 
         sentCount.textContent = "0";
         failedCount.textContent = "0";
@@ -323,7 +380,8 @@ button.addEventListener(
         }
 
         finally {
-            button.disabled = false;
+            operationRunning = false;
+            updateWorkflowButtons();
         }
 
     }
@@ -736,17 +794,32 @@ function updateSummaryPasswordStatus(hasSavedPassword) {
 
 window.electronAPI.onPayrollSummaryProgress(
     (progress) => {
+
         summaryPreparationStatus.textContent =
             progress.message;
+
+        processStatus.textContent =
+            "Processing...";
+
+        addLog(progress);
     }
 );
 
 prepareSummaryBtn.addEventListener(
     "click",
     async () => {
-        sendSummaryBtn.disabled = true;
-        prepareSummaryBtn.disabled = true;
+
+        if (operationRunning) return;
+
+        summaryReadyToSend = false;
+        operationRunning = true;
+
+        updateWorkflowButtons();
+        showActivity("summary");
+
         summaryPreparationDetails.classList.add("hidden");
+
+        processStatus.textContent = "Processing...";
 
         summaryPreparationStatus.textContent =
             "Preparing payroll summary...";
@@ -785,7 +858,14 @@ prepareSummaryBtn.addEventListener(
             summaryPreparationDetails.classList.remove(
                 "hidden"
             );
-            sendSummaryBtn.disabled = false;
+            summaryReadyToSend = true;
+
+            processStatus.textContent = "Prepared";
+
+            addLog({
+                type: "success",
+                message: "Payroll summary generated and validated."
+            });
 
             summaryPreparationStatus.textContent =
                 "Payroll summary generated and validated successfully.";
@@ -796,10 +876,18 @@ prepareSummaryBtn.addEventListener(
             summaryPreparationStatus.textContent =
                 `Error: ${error.message}`;
 
+            processStatus.textContent = "Failed";
+
+            addLog({
+                type: "error",
+                message: error.message
+            });
+
         }
         finally {
 
-            prepareSummaryBtn.disabled = false;
+            operationRunning = false;
+            updateWorkflowButtons();
 
         }
 
@@ -811,8 +899,16 @@ sendSummaryBtn.addEventListener(
     "click",
     async () => {
 
-        sendSummaryBtn.disabled = true;
-        prepareSummaryBtn.disabled = true;
+        if (operationRunning || !summaryReadyToSend) {
+            return;
+        }
+
+        operationRunning = true;
+
+        updateWorkflowButtons();
+        showActivity("summary", false);
+
+        processStatus.textContent = "Awaiting confirmation...";
 
         summaryPreparationStatus.textContent =
             "Review the confirmation dialog to send the payroll summary...";
@@ -829,7 +925,12 @@ sendSummaryBtn.addEventListener(
                     "Sending cancelled. The payroll summary is still ready.";
 
                 // Allow confirmation again
-                sendSummaryBtn.disabled = false;
+                processStatus.textContent = "Prepared";
+
+                addLog({
+                    type: "status",
+                    message: "Payroll summary sending cancelled."
+                });
 
                 return;
             }
@@ -839,6 +940,14 @@ sendSummaryBtn.addEventListener(
 
                 summaryPreparationStatus.textContent =
                     `Payroll summary not sent: ${result.error}`;
+
+                summaryReadyToSend = false;
+                processStatus.textContent = "Needs review";
+
+                addLog({
+                    type: "error",
+                    message: result.error || "Payroll summary was not sent."
+                });
 
                 // Keep sending disabled until the delivery
                 // history and failure are reviewed.
@@ -850,7 +959,15 @@ sendSummaryBtn.addEventListener(
                 `Payroll summary email accepted for ${result.recipient}.`;
 
             // Do not allow another send of the same prepared report
-            sendSummaryBtn.disabled = true;
+            summaryReadyToSend = false;
+            processStatus.textContent = "Accepted by SMTP";
+
+            addLog({
+                type: "success",
+                message: `Payroll summary accepted for ${result.recipient}.`
+            });
+
+
 
         }
         catch (error) {
@@ -858,11 +975,18 @@ sendSummaryBtn.addEventListener(
             summaryPreparationStatus.textContent =
                 `Unexpected error: ${error.message}`;
 
+            summaryReadyToSend = false;
+            processStatus.textContent = "Error";
+
+            addLog({
+                type: "error",
+                message: error.message
+            });
+
         }
         finally {
-
-            prepareSummaryBtn.disabled = false;
-
+            operationRunning = false;
+            updateWorkflowButtons();
         }
 
     }
