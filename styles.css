@@ -1102,3 +1102,41 @@ h1 {
         font-size: 28px;
     }
 }
+
+/* =========================
+   SMTP CONNECTION TESTS
+   ========================= */
+
+.connection-test {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+
+    gap: 8px;
+    margin: 8px 0 24px;
+}
+
+.connection-test .secondary-btn {
+    font-size: 13px;
+    padding: 10px 16px;
+}
+
+.connection-test .secondary-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.connection-test .settings-status {
+    margin-top: 0;
+    font-size: 12px;
+}
+
+.connection-test .settings-status:empty {
+    display: none;
+}
+
+.connection-hint {
+    font-size: 12px;
+    line-height: 1.5;
+    color: #98a2b3;
+}

@@ -408,6 +408,31 @@
 
                 </div>
 
+
+                <div class="connection-test">
+
+                    <button
+                        id="testConnectionBtn"
+                        type="button"
+                        class="secondary-btn"
+                    >
+                        Test Payslip Connection
+                    </button>
+
+                    <p
+                        id="payslipConnectionStatus"
+                        class="settings-status"
+                        role="status"
+                    ></p>
+
+                    <p class="connection-hint">
+                        Tests your saved email settings.
+                        Save any changes before testing.
+                    </p>
+
+                </div>
+
+
                 <h3>Payroll Summary</h3>
 
                 <div class="form-group">
@@ -491,14 +516,15 @@
 
                 </div>
 
-                <div class="form-group">
+                
+                <div class="connection-test">
 
                     <button
                         id="testSummaryConnectionBtn"
                         type="button"
                         class="secondary-btn"
                     >
-                        Test Payroll Summary Connection
+                        Test Summary Connection
                     </button>
 
                     <p
@@ -507,17 +533,15 @@
                         role="status"
                     ></p>
 
+                    <p class="connection-hint">
+                        Tests the saved payroll summary sender.
+                        Save any changes before testing.
+                    </p>
+
                 </div>
 
+
                 <div class="settings-actions">
-
-                    <button
-                        id="testConnectionBtn"
-                        class="secondary-btn"
-                    >
-                        Test Email Connection
-                    </button>
-
 
                     <button
                         id="saveSettingsBtn"

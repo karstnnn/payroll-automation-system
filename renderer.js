@@ -116,6 +116,11 @@ let displayedWorkflow = null;
 let operationRunning = false;
 let summaryReadyToSend = false;
 
+const payslipConnectionStatus =
+    document.getElementById(
+        "payslipConnectionStatus"
+    );
+
 
 function updateWorkflowButtons() {
 
@@ -589,6 +594,9 @@ saveSettingsBtn.addEventListener(
             settingsStatus.textContent =
                 "Settings saved successfully.";
 
+            payslipConnectionStatus.textContent = "";
+            summaryConnectionStatus.textContent = "";
+
             document.getElementById(
                 "smtpPassword"
             ).value = "";
@@ -650,81 +658,62 @@ browseFolderBtn.addEventListener(
     }
 );
 
+
 testConnectionBtn.addEventListener(
     "click",
     async () => {
 
-        const smtpHost =
-            document.getElementById(
-                "smtpHost"
-            ).value.trim();
-
-        const smtpPort =
-            document.getElementById(
-                "smtpPort"
-            ).value;
-
-        const smtpSecure =
-            document.getElementById(
-                "smtpSecure"
-            ).checked;
-
-        const smtpUser =
-            document.getElementById(
-                "smtpUser"
-            ).value.trim();
-
-        const smtpPassword =
-            document.getElementById(
-                "smtpPassword"
-            ).value;
-
-
         testConnectionBtn.disabled = true;
 
-        settingsStatus.textContent =
-            "Testing email connection...";
-
+        payslipConnectionStatus.textContent =
+            "Testing saved payslip email connection...";
 
         try {
 
-            const result =
-                await window.electronAPI
-                    .testEmailConnection({
-                        smtpHost,
-                        smtpPort,
-                        smtpSecure,
-                        smtpUser,
-                        smtpPassword
-                    });
+            // Read saved settings rather than unsaved form inputs.
+            const loaded =
+                await window.electronAPI.loadSettings();
 
+            if (!loaded.success) {
+                throw new Error(
+                    loaded.error || "Could not load saved settings."
+                );
+            }
+
+            const settings = loaded.settings;
+
+            const result =
+                await window.electronAPI.testEmailConnection({
+                    smtpHost: settings.smtpHost,
+                    smtpPort: settings.smtpPort,
+                    smtpSecure: settings.smtpSecure,
+                    smtpUser: settings.smtpUser,
+
+                    // Backend loads the encrypted saved password.
+                    smtpPassword: ""
+                });
 
             if (result.success) {
 
-                settingsStatus.textContent =
-                    "Email connection successful.";
-                
-                document.getElementById(
-                    "smtpPassword"
-                ).value = "";
+                payslipConnectionStatus.textContent =
+                    "Connection successful: " +
+                    settings.smtpUser;
 
             }
             else {
 
-                settingsStatus.textContent =
-                    `Connection failed: ${result.error}`;
+                payslipConnectionStatus.textContent =
+                    "Connection failed: " + result.error;
 
             }
 
         }
-
         catch (error) {
 
-            settingsStatus.textContent =
-                `Connection failed: ${error.message}`;
+            payslipConnectionStatus.textContent =
+                "Connection failed: " + error.message;
 
         }
-
         finally {
 
             testConnectionBtn.disabled = false;
@@ -733,6 +722,7 @@ testConnectionBtn.addEventListener(
 
     }
 );
+
 
 function updateSummarySenderFields() {
 
