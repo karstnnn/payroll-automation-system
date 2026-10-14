@@ -3,12 +3,16 @@ const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require("electron")
 const fs = require("fs");
 const path = require("path");
 const emailService = require("./services/emailService");
+
 const {preparePayrollSummary} = require("./services/payrollSummaryService");
+const crypto = require("crypto");
+const payrollSummaryHistoryService = require("./services/payrollSummaryHistoryService");
 
 const { runPayroll } = require("./app");
 
 let isPreparingSummary = false;
 let preparedSummary = null;
+let isSendingSummary = false;
 
 function createWindow() {
 
@@ -256,6 +260,22 @@ ipcMain.handle("run-payroll", async (event) => {
 
 });
 
+function getPdfHash(pdfPath) {
+
+    const pdf = fs.readFileSync(pdfPath);
+
+    if (
+        pdf.length < 1024 ||
+        pdf.subarray(0, 5).toString() !== "%PDF-"
+    ) {
+        throw new Error("The payroll summary PDF is invalid.");
+    }
+
+    return crypto
+        .createHash("sha256")
+        .update(pdf)
+        .digest("hex");
+}
 
 ipcMain.handle(
     "prepare-payroll-summary",
@@ -265,6 +285,13 @@ ipcMain.handle(
             return {
                 success: false,
                 error: "Payroll summary generation is already running."
+            };
+        }
+
+        if (isSendingSummary) {
+            return {
+                success: false,
+                error: "Cannot regenerate the report while sending."
             };
         }
 
@@ -320,7 +347,8 @@ ipcMain.handle(
                 ...result,
                 recipient,
                 sender,
-                senderMode: settings.summarySenderMode
+                senderMode: settings.summarySenderMode,
+                pdfHash: getPdfHash(result.pdfPath)
             };
 
             return {
@@ -352,6 +380,225 @@ ipcMain.handle(
         }
     }
 );
+
+
+ipcMain.handle("send-payroll-summary", async () => {
+
+    if (isSendingSummary || isPreparingSummary) {
+        return {
+            success: false,
+            error: "A payroll summary operation is already running."
+        };
+    }
+
+    if (!preparedSummary) {
+        return {
+            success: false,
+            error: "Generate the payroll summary before sending."
+        };
+    }
+
+    isSendingSummary = true;
+
+    const report = preparedSummary;
+    const userDataPath = app.getPath("userData");
+
+    let deliveryStarted = false;
+
+    try {
+
+        // 1. Load saved settings
+        const settings = JSON.parse(
+            fs.readFileSync(getSettingsPath(), "utf8")
+        );
+
+        const separate =
+            settings.summarySenderMode === "separate";
+
+        if (!["same", "separate"].includes(settings.summarySenderMode)) {
+            throw new Error("Invalid payroll summary sender mode.");
+        }
+
+        const sender = separate
+            ? settings.summarySenderEmail
+            : settings.smtpUser;
+
+        const recipient = settings.summaryRecipientEmail;
+
+        // 2. Prevent changes to the intended recipient/sender
+        if (
+            recipient !== report.recipient ||
+            sender !== report.sender ||
+            settings.summarySenderMode !== report.senderMode
+        ) {
+            throw new Error(
+                "Email settings have changed. Generate the report again."
+            );
+        }
+
+        // 3. Check delivery history
+        const previousDelivery =
+            payrollSummaryHistoryService.getDeliveryStatus(
+                userDataPath,
+                report.month,
+                recipient
+            );
+
+        if (previousDelivery) {
+            throw new Error(
+                `This payroll summary already has a delivery record ` +
+                `(${previousDelivery.status}). Review its history before resending.`
+            );
+        }
+
+        // 4. Ask the user for explicit confirmation
+        const confirmation = await dialog.showMessageBox({
+            type: "warning",
+            title: "Confirm Payroll Summary Email",
+            message: "Send the confidential payroll summary?",
+            detail:
+                `Period: ${report.month}\n` +
+                `File: ${report.fileName}\n` +
+                `From: ${sender}\n` +
+                `To: ${recipient}\n\n` +
+                `Please verify the recipient before sending.`,
+            buttons: [
+                "Cancel",
+                "Send Payroll Summary"
+            ],
+            defaultId: 0,
+            cancelId: 0,
+            noLink: true
+        });
+
+        if (confirmation.response !== 1) {
+            return {
+                success: false,
+                cancelled: true
+            };
+        }
+
+        // 5. Read and validate the exact attachment bytes
+        const pdfBuffer = fs.readFileSync(report.pdfPath);
+
+        const currentHash = crypto
+            .createHash("sha256")
+            .update(pdfBuffer)
+            .digest("hex");
+
+        if (currentHash !== report.pdfHash) {
+            throw new Error(
+                "The payroll summary PDF has changed. Generate it again."
+            );
+        }
+
+        // 6. Recheck history before starting delivery
+        if (payrollSummaryHistoryService.getDeliveryStatus(
+            userDataPath,
+            report.month,
+            recipient
+        )) {
+            throw new Error(
+                "A delivery record already exists for this report."
+            );
+        }
+
+        // 7. Select the saved SMTP credentials
+        const smtpPassword = separate
+            ? loadSummaryPassword()
+            : loadPassword();
+
+        if (!smtpPassword) {
+            throw new Error("The selected SMTP password is missing.");
+        }
+
+        const smtpConfig = {
+            smtp: {
+                host: settings.smtpHost,
+                port: Number(settings.smtpPort),
+                secure: settings.smtpSecure
+            },
+            smtpUser: sender,
+            smtpPassword
+        };
+
+        // 8. Persist intent before SMTP transmission
+        payrollSummaryHistoryService.markDeliveryStatus(
+            userDataPath,
+            report.month,
+            recipient,
+            "sending"
+        );
+
+        deliveryStarted = true;
+
+        // 9. Send the accountant's report
+        const emailResult = await emailService.sendPayrollSummary(
+            {
+                ...report,
+                pdfBuffer
+            },
+            smtpConfig
+        );
+
+        // 10. Mark the delivery as sent
+        payrollSummaryHistoryService.markDeliveryStatus(
+            userDataPath,
+            report.month,
+            recipient,
+            "sent"
+        );
+
+        deliveryStarted = false;
+        preparedSummary = null;
+
+        return {
+            success: true,
+            messageId: emailResult.messageId,
+            recipient
+        };
+
+    }
+    catch (error) {
+
+        if (deliveryStarted) {
+
+            // Do not automatically retry uncertain SMTP outcomes.
+            try {
+                payrollSummaryHistoryService.markDeliveryStatus(
+                    userDataPath,
+                    report.month,
+                    report.recipient,
+                    "needs-review"
+                );
+            }
+            catch (historyError) {
+                console.error(
+                    "Could not update summary delivery history:",
+                    historyError
+                );
+            }
+
+            preparedSummary = null;
+        }
+
+        console.error(
+            "Payroll summary sending failed:",
+            error
+        );
+
+        return {
+            success: false,
+            error: error.message
+        };
+
+    }
+    finally {
+        isSendingSummary = false;
+    }
+
+});
+
 
 
 ipcMain.handle(

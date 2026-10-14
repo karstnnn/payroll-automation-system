@@ -290,7 +290,7 @@ async function sendPayrollSummary(report, config) {
         attachments: [
             {
                 filename: fileName,
-                path: pdfPath,
+                content: report.pdfBuffer,
                 contentType: "application/pdf"
             }
         ]

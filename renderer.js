@@ -105,6 +105,9 @@ const summaryPreparationStatus =
 const summaryPreparationDetails =
     document.getElementById("summaryPreparationDetails");
 
+const sendSummaryBtn =
+    document.getElementById("sendSummaryBtn");
+
 testSummaryConnectionBtn.addEventListener(
     "click",
     async () => {
@@ -741,7 +744,7 @@ window.electronAPI.onPayrollSummaryProgress(
 prepareSummaryBtn.addEventListener(
     "click",
     async () => {
-
+        sendSummaryBtn.disabled = true;
         prepareSummaryBtn.disabled = true;
         summaryPreparationDetails.classList.add("hidden");
 
@@ -782,6 +785,7 @@ prepareSummaryBtn.addEventListener(
             summaryPreparationDetails.classList.remove(
                 "hidden"
             );
+            sendSummaryBtn.disabled = false;
 
             summaryPreparationStatus.textContent =
                 "Payroll summary generated and validated successfully.";
@@ -791,6 +795,68 @@ prepareSummaryBtn.addEventListener(
 
             summaryPreparationStatus.textContent =
                 `Error: ${error.message}`;
+
+        }
+        finally {
+
+            prepareSummaryBtn.disabled = false;
+
+        }
+
+    }
+);
+
+
+sendSummaryBtn.addEventListener(
+    "click",
+    async () => {
+
+        sendSummaryBtn.disabled = true;
+        prepareSummaryBtn.disabled = true;
+
+        summaryPreparationStatus.textContent =
+            "Review the confirmation dialog to send the payroll summary...";
+
+        try {
+
+            const result =
+                await window.electronAPI.sendPayrollSummary();
+
+            // User cancelled the confirmation dialog
+            if (result.cancelled) {
+
+                summaryPreparationStatus.textContent =
+                    "Sending cancelled. The payroll summary is still ready.";
+
+                // Allow confirmation again
+                sendSummaryBtn.disabled = false;
+
+                return;
+            }
+
+            // Email sending failed or was blocked
+            if (!result.success) {
+
+                summaryPreparationStatus.textContent =
+                    `Payroll summary not sent: ${result.error}`;
+
+                // Keep sending disabled until the delivery
+                // history and failure are reviewed.
+                return;
+            }
+
+            // SMTP server accepted the email
+            summaryPreparationStatus.textContent =
+                `Payroll summary email accepted for ${result.recipient}.`;
+
+            // Do not allow another send of the same prepared report
+            sendSummaryBtn.disabled = true;
+
+        }
+        catch (error) {
+
+            summaryPreparationStatus.textContent =
+                `Unexpected error: ${error.message}`;
 
         }
         finally {

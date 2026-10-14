@@ -54,6 +54,9 @@ contextBridge.exposeInMainWorld("electronAPI", {
             }
         );
 
-    }
+    },
+
+    sendPayrollSummary: () =>
+        ipcRenderer.invoke("send-payroll-summary"),
 
 });

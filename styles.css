@@ -852,3 +852,12 @@ h1 {
     line-height: 1.8;
     color: #475467;
 }
+
+.summary-send-actions {
+    margin-top: 15px;
+}
+
+.summary-send-actions .generate-btn {
+    font-size: 14px;
+    padding: 11px 18px;
+}
