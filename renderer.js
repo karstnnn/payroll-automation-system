@@ -420,6 +420,10 @@ settingsBtn.addEventListener(
         updateSummaryPasswordStatus(
                 settings.hasSavedSummaryPassword === true
             );
+        
+        updatePayslipPasswordStatus(
+            settings.hasSavedPassword === true
+        );
 
         /*
         const summaryPasswordInput =
@@ -487,21 +491,6 @@ settingsBtn.addEventListener(
             document.getElementById(
                 "smtpPassword"
             );
-
-        if (settings.hasSavedPassword) {
-
-            passwordInput.placeholder =
-                "Saved password";
-
-        }
-        else {
-
-            passwordInput.placeholder =
-                "Enter email password";
-
-        }
-
-
 
     }
 );
@@ -615,6 +604,10 @@ saveSettingsBtn.addEventListener(
 
                 const hasPassword =
                     refreshed.settings.hasSavedSummaryPassword === true;
+
+                updatePayslipPasswordStatus(
+                    refreshed.settings.hasSavedPassword === true
+                );
 
                 updateSummaryPasswordStatus(hasPassword);
 
@@ -991,4 +984,37 @@ sendSummaryBtn.addEventListener(
 
     }
 );
+
+
+function updatePayslipPasswordStatus(hasSavedPassword) {
+
+    const status = document.getElementById(
+        "payslipPasswordStatus"
+    );
+
+    const icon = document.getElementById(
+        "payslipPasswordStatusIcon"
+    );
+
+    const text = document.getElementById(
+        "payslipPasswordStatusText"
+    );
+
+    const input = document.getElementById(
+        "smtpPassword"
+    );
+
+    status.classList.toggle("saved", hasSavedPassword);
+    status.classList.toggle("missing", !hasSavedPassword);
+
+    icon.textContent = hasSavedPassword ? "✓" : "○";
+
+    text.textContent = hasSavedPassword
+        ? "Encrypted password saved"
+        : "No password saved";
+
+    input.placeholder = hasSavedPassword
+        ? "Leave blank to keep saved password"
+        : "Enter email password";
+}
 
