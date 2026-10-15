@@ -2,6 +2,43 @@ require("dotenv").config();
 const { app, BrowserWindow, ipcMain, dialog, safeStorage } = require("electron");
 const fs = require("fs");
 const path = require("path");
+
+
+const IS_TEST_MODE =
+    !app.isPackaged &&
+    process.env.PAYROLL_TEST_MODE === "1";
+
+const TEST_RECIPIENT =
+    (process.env.PAYROLL_TEST_RECIPIENT || "").trim();
+
+if (IS_TEST_MODE) {
+
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailPattern.test(TEST_RECIPIENT)) {
+        throw new Error(
+            "A valid test recipient email is required."
+        );
+    }
+
+    const testUserDataPath = path.join(
+        app.getPath("appData"),
+        "Payslip Automation - Test"
+    );
+
+    fs.mkdirSync(
+        testUserDataPath,
+        { recursive: true }
+    );
+
+    app.setPath("userData", testUserDataPath);
+
+    console.log("[TEST MODE] Enabled.");
+    console.log("[TEST MODE] Recipient:", TEST_RECIPIENT);
+    console.log("[TEST MODE] Data:", testUserDataPath);
+}
+
+
 const emailService = require("./services/emailService");
 
 const {preparePayrollSummary} = require("./services/payrollSummaryService");
@@ -9,6 +46,28 @@ const crypto = require("crypto");
 const payrollSummaryHistoryService = require("./services/payrollSummaryHistoryService");
 
 const { runPayroll } = require("./app");
+
+if (IS_TEST_MODE) {
+
+    const runHistoryService = require(
+        "./services/runHistoryService"
+    );
+
+    const testHistoryFolder = path.join(
+        app.getPath("userData"),
+        "history",
+        "payslips"
+    );
+
+    runHistoryService.setHistoryFolder(
+        testHistoryFolder
+    );
+
+    console.log(
+        "[TEST MODE] Payslip history:",
+        testHistoryFolder
+    );
+}
 
 let isPreparingSummary = false;
 let preparedSummary = null;
@@ -46,6 +105,13 @@ function createWindow() {
     );
 
     window.loadFile("index.html");
+}
+
+function getSummaryRecipient(settings) {
+
+    return IS_TEST_MODE
+        ? TEST_RECIPIENT
+        : settings.summaryRecipientEmail;
 }
 
 function getSettingsPath() {
@@ -128,7 +194,13 @@ function getRuntimeConfig() {
         smtpUser:
             settings.smtpUser,
 
-        smtpPassword
+        smtpPassword,
+
+        testMode: IS_TEST_MODE,
+
+        testRecipient: IS_TEST_MODE
+            ? TEST_RECIPIENT
+            : null
 
     };
 }
@@ -229,6 +301,13 @@ function loadSummaryPassword() {
 
 ipcMain.handle("run-payroll", async (event) => {
 
+    if (!app.isPackaged && !IS_TEST_MODE) {
+        return {
+            success: false,
+            error: "Email sending is blocked in development unless Test Mode is enabled."
+        };
+    }
+
     try {
 
         const config = getRuntimeConfig();
@@ -314,7 +393,7 @@ ipcMain.handle(
                 throw new Error("Invalid payroll summary sender mode.");
             }
 
-            const recipient = settings.summaryRecipientEmail;
+            const recipient = getSummaryRecipient(settings);
 
             const sender = settings.summarySenderMode === "separate"
                 ? settings.summarySenderEmail
@@ -384,6 +463,13 @@ ipcMain.handle(
 
 ipcMain.handle("send-payroll-summary", async () => {
 
+    if (!app.isPackaged && !IS_TEST_MODE) {
+        return {
+            success: false,
+            error: "Email sending is blocked in development unless Test Mode is enabled."
+        };
+    }
+
     if (isSendingSummary || isPreparingSummary) {
         return {
             success: false,
@@ -423,7 +509,7 @@ ipcMain.handle("send-payroll-summary", async () => {
             ? settings.summarySenderEmail
             : settings.smtpUser;
 
-        const recipient = settings.summaryRecipientEmail;
+        const recipient = getSummaryRecipient(settings);
 
         // 2. Prevent changes to the intended recipient/sender
         if (
@@ -518,8 +604,15 @@ ipcMain.handle("send-payroll-summary", async () => {
                 port: Number(settings.smtpPort),
                 secure: settings.smtpSecure
             },
+
             smtpUser: sender,
-            smtpPassword
+            smtpPassword,
+
+            testMode: IS_TEST_MODE,
+
+            testRecipient: IS_TEST_MODE
+                ? TEST_RECIPIENT
+                : null
         };
 
         // 8. Persist intent before SMTP transmission
@@ -626,6 +719,35 @@ ipcMain.handle(
                         ...settings,
                         hasSavedPassword: fs.existsSync(getCredentialsPath()),
                         hasSavedSummaryPassword: fs.existsSync(getSummaryCredentialsPath())
+                    }
+                };
+            }
+
+            if (IS_TEST_MODE) {
+
+                return {
+                    success: true,
+
+                    settings: {
+                        pdfRootFolder: "",
+                        appsScriptUrl: "",
+
+                        smtpHost: "",
+                        smtpPort: 465,
+                        smtpSecure: true,
+                        smtpUser: "",
+
+                        summaryRecipientEmail:
+                            TEST_RECIPIENT,
+
+                        summarySenderMode: "same",
+                        summarySenderEmail: "",
+
+                        hasSavedPassword:
+                            fs.existsSync(getCredentialsPath()),
+
+                        hasSavedSummaryPassword:
+                            fs.existsSync(getSummaryCredentialsPath())
                     }
                 };
             }

@@ -71,12 +71,22 @@ async function send(employee, config) {
 
     const email = template.create(employee, config);
 
+    const recipient = config.testMode
+    ? config.testRecipient
+    : employee.email;
+
+    if (!recipient) {
+        throw new Error("Email recipient is missing.");
+    }
+
     const info = await transporter.sendMail({
         from: config.smtpUser,
 
-        to: employee.email,
+        to: recipient,
 
-        subject: email.subject,
+        subject: config.testMode
+            ? `[TEST - ${employee.name}] ${email.subject}`
+            : email.subject,
 
         html: email.html,
 
@@ -259,6 +269,24 @@ async function sendPayrollSummary(report, config) {
         );
     }
 
+    if (config.testMode) {
+
+        const expectedRecipient =
+            (config.testRecipient || "")
+                .trim()
+                .toLowerCase();
+
+        if (
+            !expectedRecipient ||
+            recipient.trim().toLowerCase() !== expectedRecipient
+        ) {
+            throw new Error(
+                "Test Mode blocked a payroll summary email " +
+                "to an unauthorized recipient."
+            );
+        }
+    }
+
     if (!config.smtpUser || !config.smtpPassword) {
         throw new Error(
             "Payroll summary SMTP credentials are missing."
@@ -267,7 +295,9 @@ async function sendPayrollSummary(report, config) {
 
     const transporter = createTransporter(config);
 
-    const subject = `Payroll Summary - ${month}`;
+    const subject = config.testMode
+    ? `[TEST] Payroll Summary - ${month}`
+    : `Payroll Summary - ${month}`;
 
     const body =
         `Good day,\n\n` +

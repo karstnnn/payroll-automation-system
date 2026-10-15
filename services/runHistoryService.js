@@ -8,25 +8,26 @@ const appData =
     process.cwd();
 
 
-const historyFolder =
+let historyFolder =
     path.join(
         appData,
         "pay-slip",
         "history"
     );
 
+function setHistoryFolder(folder) {
 
-if (!fs.existsSync(historyFolder)) {
+    if (
+        typeof folder !== "string" ||
+        !path.isAbsolute(folder)
+    ) {
+        throw new Error(
+            "An absolute history folder path is required."
+        );
+    }
 
-    fs.mkdirSync(
-        historyFolder,
-        {
-            recursive: true
-        }
-    );
-
+    historyFolder = folder;
 }
-
 
 function sanitizePeriod(period) {
 
@@ -89,6 +90,11 @@ function loadHistory(period) {
 
 
 function saveHistory(period, history) {
+
+    fs.mkdirSync(
+        historyFolder,
+        { recursive: true }
+    );
 
     const historyPath =
         getHistoryPath(period);
@@ -233,13 +239,9 @@ function markFailed(
 
 
 module.exports = {
-
+    setHistoryFolder,
     loadHistory,
-
     wasAlreadySent,
-
     markSent,
-
     markFailed
-
 };
