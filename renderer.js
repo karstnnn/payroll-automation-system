@@ -116,6 +116,17 @@ let displayedWorkflow = null;
 let operationRunning = false;
 let summaryReadyToSend = false;
 
+const testHistoryControls =
+    document.getElementById("testHistoryControls");
+
+const resetTestHistoryBtn =
+    document.getElementById("resetTestHistoryBtn");
+
+const testHistoryStatus =
+    document.getElementById("testHistoryStatus");
+
+let canResetTestHistory = false;
+
 const payslipConnectionStatus =
     document.getElementById(
         "payslipConnectionStatus"
@@ -130,7 +141,102 @@ function updateWorkflowButtons() {
 
     sendSummaryBtn.disabled =
         operationRunning || !summaryReadyToSend;
+
+    resetTestHistoryBtn.disabled =
+    operationRunning || !canResetTestHistory;
 }
+
+function clearPreparedSummaryUi() {
+    summaryReadyToSend = false;
+    summaryPreparationDetails.classList.add("hidden");
+
+    for (const id of [
+        "summaryReportName",
+        "summaryReportPeriod",
+        "summaryReportSender",
+        "summaryReportRecipient"
+    ]) {
+        document.getElementById(id).textContent = "";
+    }
+
+    summaryPreparationStatus.textContent =
+        "Generate the payroll summary again before sending.";
+}
+
+async function loadTestModeStatus() {
+    try {
+        const status =
+            await window.electronAPI.getTestModeStatus();
+
+        canResetTestHistory =
+            status.canResetTestHistory === true;
+    } catch (error) {
+        canResetTestHistory = false;
+        console.error("Could not load Test Mode status:", error);
+    }
+
+    testHistoryControls.classList.toggle(
+        "hidden",
+        !canResetTestHistory
+    );
+
+    updateWorkflowButtons();
+}
+
+resetTestHistoryBtn.addEventListener("click", async () => {
+    if (operationRunning || !canResetTestHistory) return;
+
+    operationRunning = true;
+    updateWorkflowButtons();
+
+    testHistoryStatus.textContent =
+        "Review the confirmation to reset test history...";
+
+    try {
+        const result =
+            await window.electronAPI.resetTestHistory();
+
+        if (result.cancelled) {
+            testHistoryStatus.textContent =
+                "Reset cancelled. Test history was kept.";
+            return;
+        }
+
+        if (result.historyResetStarted) {
+            clearPreparedSummaryUi();
+            summaryPanel.classList.add("hidden");
+
+            for (const counter of [
+                sentCount,
+                failedCount,
+                skippedCount,
+                alreadySentCount
+            ]) {
+                counter.textContent = "0";
+            }
+
+            processStatus.textContent =
+                result.success ? "Ready" : "Needs review";
+        }
+
+        testHistoryStatus.textContent = result.success
+            ? "Test history cleared. Settings and saved credentials were kept."
+            : `Reset failed: ${result.error || "Unknown error"}`;
+    } catch (error) {
+        // The IPC response might fail after the reset was confirmed.
+        clearPreparedSummaryUi();
+        processStatus.textContent = "Needs review";
+
+        testHistoryStatus.textContent =
+            `Could not confirm the reset result: ${error.message}. ` +
+            "Check the result before sending again.";
+    } finally {
+        operationRunning = false;
+        updateWorkflowButtons();
+    }
+});
+
+loadTestModeStatus();
 
 
 function showActivity(workflow, clearLog = true) {
@@ -339,6 +445,7 @@ button.addEventListener(
         sentCount.textContent = "0";
         failedCount.textContent = "0";
         skippedCount.textContent = "0";
+        alreadySentCount.textContent = "0";
 
         processStatus.textContent =
             "Processing...";

@@ -239,6 +239,7 @@ function markFailed(
 
 
 module.exports = {
+    getHistoryFolder: () => historyFolder,
     setHistoryFolder,
     loadHistory,
     wasAlreadySent,

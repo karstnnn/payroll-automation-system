@@ -5,6 +5,12 @@ const {
 
 contextBridge.exposeInMainWorld("electronAPI", {
 
+    getTestModeStatus: () =>
+    ipcRenderer.invoke("get-test-mode-status"),
+
+    resetTestHistory: () =>
+    ipcRenderer.invoke("reset-test-history"),
+
     runPayroll: () => {
         return ipcRenderer.invoke("run-payroll");
     },

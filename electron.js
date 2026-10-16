@@ -39,7 +39,22 @@ if (IS_TEST_MODE) {
 }
 
 
+// The test userData profile has already been selected above.
+if (!app.requestSingleInstanceLock()) {
+    app.quit();
+} else {
+    startApplication();
+}
+
+function startApplication() {
+
 const emailService = require("./services/emailService");
+
+const runHistoryService = require("./services/runHistoryService");
+
+const { clearTestHistory } = require(
+    "./services/testHistoryService"
+);
 
 const {preparePayrollSummary} = require("./services/payrollSummaryService");
 const crypto = require("crypto");
@@ -48,10 +63,6 @@ const payrollSummaryHistoryService = require("./services/payrollSummaryHistorySe
 const { runPayroll } = require("./app");
 
 if (IS_TEST_MODE) {
-
-    const runHistoryService = require(
-        "./services/runHistoryService"
-    );
 
     const testHistoryFolder = path.join(
         app.getPath("userData"),
@@ -72,6 +83,106 @@ if (IS_TEST_MODE) {
 let isPreparingSummary = false;
 let preparedSummary = null;
 let isSendingSummary = false;
+
+let isRunningPayroll = false;
+let isResettingTestHistory = false;
+
+function isWorkflowBusy() {
+    return (
+        isRunningPayroll ||
+        isPreparingSummary ||
+        isSendingSummary ||
+        isResettingTestHistory
+    );
+}
+
+ipcMain.handle("get-test-mode-status", async () => ({
+    canResetTestHistory: IS_TEST_MODE && !app.isPackaged
+}));
+
+ipcMain.handle("reset-test-history", async () => {
+    if (!IS_TEST_MODE || app.isPackaged) {
+        return {
+            success: false,
+            error:
+                "Reset Test History is available only in development Test Mode."
+        };
+    }
+
+    if (isWorkflowBusy()) {
+        return {
+            success: false,
+            error:
+                "Wait for the current payroll operation to finish before resetting test history."
+        };
+    }
+
+    // Acquire before awaiting confirmation.
+    isResettingTestHistory = true;
+    let historyResetStarted = false;
+
+    try {
+        const confirmation = await dialog.showMessageBox({
+            type: "warning",
+            title: "Reset Test History",
+            message:
+                "Clear test payslip and payroll summary delivery history?",
+            detail:
+                "This allows previously sent test emails to be sent again. " +
+                "Any prepared payroll summary will need to be generated again.\n\n" +
+                "Only test delivery histories will be cleared. Settings, saved " +
+                "credentials, production histories and PDF files will be kept.",
+            buttons: ["Cancel", "Reset Test History"],
+            defaultId: 0,
+            cancelId: 0,
+            noLink: true
+        });
+
+        if (confirmation.response !== 1) {
+            return {
+                success: false,
+                cancelled: true
+            };
+        }
+
+        preparedSummary = null;
+        historyResetStarted = true;
+
+        const removedFiles = clearTestHistory({
+            isTestMode: IS_TEST_MODE,
+            isPackaged: app.isPackaged,
+            appDataPath: app.getPath("appData"),
+            userDataPath: app.getPath("userData"),
+            payslipHistoryFolder: runHistoryService.getHistoryFolder()
+        });
+
+        return {
+            success: true,
+            historyResetStarted,
+            removedFiles
+        };
+    } catch (error) {
+        return {
+            success: false,
+            historyResetStarted,
+            error: historyResetStarted
+                ? "Test history reset did not complete; some records may have been cleared. " +
+                  error.message
+                : error.message
+        };
+    } finally {
+        isResettingTestHistory = false;
+    }
+});
+
+app.on("second-instance", () => {
+    const window = BrowserWindow.getAllWindows()[0];
+
+    if (window) {
+        if (window.isMinimized()) window.restore();
+        window.focus();
+    }
+});
 
 function createWindow() {
 
@@ -308,6 +419,15 @@ ipcMain.handle("run-payroll", async (event) => {
         };
     }
 
+    if (isWorkflowBusy()) {
+    return {
+        success: false,
+        error: "A payroll operation is already running."
+    };
+}
+
+    isRunningPayroll = true;
+
     try {
 
         const config = getRuntimeConfig();
@@ -335,6 +455,8 @@ ipcMain.handle("run-payroll", async (event) => {
             error: error.message
         };
 
+    } finally {
+        isRunningPayroll = false;
     }
 
 });
@@ -359,6 +481,13 @@ function getPdfHash(pdfPath) {
 ipcMain.handle(
     "prepare-payroll-summary",
     async (event) => {
+
+        if (isRunningPayroll || isResettingTestHistory) {
+            return {
+                success: false,
+                error: "A payroll operation is already running."
+            };
+        }
 
         if (isPreparingSummary) {
             return {
@@ -470,7 +599,7 @@ ipcMain.handle("send-payroll-summary", async () => {
         };
     }
 
-    if (isSendingSummary || isPreparingSummary) {
+    if (isWorkflowBusy()) {
         return {
             success: false,
             error: "A payroll summary operation is already running."
@@ -1226,3 +1355,4 @@ app.whenReady().then(() => {
     createWindow();
 
 });
+}

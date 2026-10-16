@@ -302,10 +302,7 @@ async function sendPayrollSummary(report, config) {
     const body =
         `Good day,\n\n` +
         `Please find attached the payroll summary for ${month}.\n\n` +
-        `This document contains confidential payroll information. ` +
-        `Please handle it accordingly.\n\n` +
-        `Best regards,\n` +
-        `Payroll Department`;
+        `Best regards,`;
 
     const info = await transporter.sendMail({
 

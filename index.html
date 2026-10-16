@@ -27,7 +27,7 @@
             <header class="dashboard-header">
 
                 <div>
-                    <h1>Payslip Automation</h1>
+                    <h1>Fintreas Payroll</h1>
 
                     <p class="subtitle">
                         Manage employee payslips and payroll reports.
@@ -84,8 +84,7 @@
                         <h2>Payroll Summary</h2>
 
                         <p>
-                            Generate and email the consolidated
-                            payroll report to the accountant.
+                            Generate and email the payroll summary.
                         </p>
                     </div>
 
@@ -540,6 +539,34 @@
 
                 </div>
 
+
+                <section
+                    id="testHistoryControls"
+                    class="hidden"
+                    aria-labelledby="testHistoryHeading"
+                >
+                    <h3 id="testHistoryHeading">Test Mode</h3>
+
+                    <p class="connection-hint">
+                        Clear test delivery history to send test emails again.
+                        Settings, saved credentials and production history are kept.
+                    </p>
+
+                    <button
+                        id="resetTestHistoryBtn"
+                        type="button"
+                        class="secondary-btn"
+                        disabled
+                    >
+                        Reset Test History
+                    </button>
+
+                    <p
+                        id="testHistoryStatus"
+                        class="settings-status"
+                        role="status"
+                    ></p>
+                </section>
 
                 <div class="settings-actions">
 
